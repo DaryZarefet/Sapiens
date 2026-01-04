@@ -1,0 +1,19 @@
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* SABE DIOS QUE ES ESTO */
+/* .group.space-hover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 2rem;
+  pointer-events: auto;
+} */

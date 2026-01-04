@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #2563eb;
+  --color-primary-600: #1d4ed8;
+  --color-primary-700: #1e40af;
+
+  --color-accent: #f59e0b;
+
+  --color-surface: #ffffff;
+  --color-surface-2: #f8fafc;
+
+  --color-border: #e6e7ea;
+
+  --color-text: #0f172a;
+  --color-muted: #64748b;
+
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+}
+
+/* BACKGROUNDS */
+.bg-primary {
+  @apply bg-[var(--color-primary)];
+}
+.bg-primary-600 {
+  @apply bg-[var(--color-primary-600)];
+}
+.bg-primary-700 {
+  @apply bg-[var(--color-primary-700)];
+}
+.bg-accent {
+  @apply bg-[var(--color-accent)];
+}
+.bg-surface {
+  @apply bg-[var(--color-surface)];
+}
+.bg-surface-2 {
+  @apply bg-[var(--color-surface-2)];
+}
+
+/* TEXT COLORS */
+.text-primary {
+  @apply text-[var(--color-text)];
+}
+.text-muted {
+  @apply text-[var(--color-muted)];
+}
+.text-accent {
+  @apply text-[var(--color-accent)];
+}
+
+/* BORDERS DIVIDRES */
+.border-default {
+  @apply border border-[var(--color-border)];
+}
+.border-muted {
+  @apply border border-[var(--color-border)];
+}
+
+/* BUTTONS */
+.btn-primary {
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold text-white shadow;
+  background-color: var(--color-primary);
+}
+.btn-primary:hover {
+  background-color: var(--color-primary-600);
+}
+.btn-accent {
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold text-[var(--color-text)];
+  background-color: var(--color-accent);
+}
+
+/* INPUTS */
+.input-underline {
+  @apply w-full bg-transparent text-[var(--color-text)] placeholder:text-[var(--color-muted)] py-2 focus:outline-none;
+  border: none;
+  border-bottom: 2px solid var(--color-border);
+}
+.input-underline:focus {
+  outline: none;
+  box-shadow: none;
+  border-bottom-color: var(--color-primary-600);
+}
+
+/* HELPERS */
+.text-on-primary {
+  color: white;
+}
+.shadow-soft {
+  @apply shadow-sm;
+}
+
+/* FOCUS */
+.focus-ring-primary:focus {
+  box-shadow: 0 0 0 4px rgb(37 99 235 / 12%); /* soft ring usando primary */
+  outline: none;
+}
+
+.badge {
+  @apply inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full;
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* MESSAGES  */
+.msg-me {
+  background-color: var(--color-primary);
+  color: white;
+}
+.msg-them {
+  background-color: var(--color-surface-2);
+  color: var(--color-text);
+}
+.text-success {
+  color: var(--color-success);
+}
+.text-danger {
+  color: var(--color-danger);
+}
