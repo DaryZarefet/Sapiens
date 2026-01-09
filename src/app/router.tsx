@@ -57,7 +57,7 @@ export const router = createBrowserRouter([
       { path: "/publicar/documento", element: <CreateArticle document={true} /> },
 
       //ARTICLE INFO
-      { path: "/:category/:id", element: <Commentbox /> },
+      { path: "/detalles/:id", element: <Commentbox /> },
 
       //NOTIFICATIONS
       { path: "/notificaciones", element: <Notifications /> },

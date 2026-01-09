@@ -60,7 +60,7 @@ export const AsidePost = () => {
 
                   <button
                     aria-label={`Seguir a ${name}`}
-                    className="p-2 rounded-md hover:bg-surface-2 transition flex items-center justify-center"
+                    className="p-2 border border-[var(--color-border)] rounded-xl hover:bg-surface-2 transition flex items-center justify-center"
                     title={`Seguir a ${name}`}
                   >
                     <Plus size={18} className="text-primary" />
@@ -110,5 +110,3 @@ export const AsidePost = () => {
     </aside>
   );
 };
-
-export default AsidePost;

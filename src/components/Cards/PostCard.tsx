@@ -76,13 +76,7 @@ export const PostCard = ({ post }: { post: Post }) => {
       </div>
 
       {/* BODY (clicable) */}
-      <div
-        onClick={() => handleNavigate("/comentarios")}
-        role="button"
-        tabIndex={0}
-        className="flex flex-col gap-2 text-primary cursor-pointer"
-        aria-label={`Ver detalles de ${title}`}
-      >
+      <div onClick={() => handleNavigate(`/detalles/${id}`)} role="button" className="flex flex-col gap-2 text-primary cursor-pointer">
         <h3 className="font-bold text-lg flex items-center gap-2" id={`post-title-click-${id}`}>
           {title}
         </h3>

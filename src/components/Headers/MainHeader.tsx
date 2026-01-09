@@ -6,6 +6,7 @@ import { useRef, useState, useEffect } from "react";
 import { Bell, PencilLine } from "lucide-react";
 import { PanelOptions } from "./PanelOptions";
 import { Avatar } from "../Avatar";
+import { Input } from "@/shared/inputs/Input";
 
 export const MainHeader = () => {
   const { user } = useAuthContext();
@@ -76,11 +77,10 @@ export const MainHeader = () => {
 
           {/* Center - Search */}
           <div className="flex-1 flex justify-center px-4">
-            <input
+            <Input
               type="search"
               placeholder="Buscar contenido..."
-              aria-label="Buscar contenido"
-              className="w-full max-w-xl px-4 py-2 rounded-xl bg-surface-2 border border-[var(--color-border)] text-primary placeholder:text-muted focus:outline-none focus-ring-primary"
+              className="w-full max-w-xl px-4 py-2 rounded-xl bg-surface-2 border border-[var(--color-border)] text-primary"
             />
           </div>
 
