@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "@/context/AuthContext";
 
 interface ButtonProps {
   children: React.ReactNode;
@@ -7,10 +7,19 @@ interface ButtonProps {
 }
 
 export const Buttonav = ({ children, path, className }: ButtonProps) => {
-  const navigate = useNavigate();
+  const { clearError } = useAuthContext();
+
+  const handleClick = () => {
+    clearError();
+    window.location.href = path;
+  };
 
   return (
-    <button className={`cursor-pointer ${className}`} onClick={() => navigate(path)}>
+    <button
+      type="button"
+      className={`cursor-pointer ${className}`}
+      onClick={handleClick}
+    >
       {children}
     </button>
   );
