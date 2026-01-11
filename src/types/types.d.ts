@@ -41,6 +41,7 @@ export type Comment = {
   dislikes?: number;
   views: number;
   messages: number;
+  replies?: Comment[];
 };
 
 export type Like = {
@@ -186,3 +187,8 @@ export type Option = {
   label: string;
   Icon?: React.ComponentType<{ className?: string }>;
 };
+
+export type ActiveAction = {
+  type: "EDIT" | "REPLY";
+  id: number;
+} | null;
