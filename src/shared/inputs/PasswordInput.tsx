@@ -29,7 +29,7 @@ export const PasswordInput = <T extends FieldValues>({
       render={({ field, fieldState: { error } }) => (
         <div className="w-full">
           {label && (
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-primary-700 mb-1">
               {label}
             </label>
           )}
@@ -39,23 +39,24 @@ export const PasswordInput = <T extends FieldValues>({
               {...field}
               type={visible ? "text" : "password"}
               placeholder={placeholder}
-              className={`block w-full px-3 py-2 pr-10 border rounded-md sm:text-sm transition-all outline-none ${
+              className={`block w-full px-4 py-2.5 pr-11 border rounded-xl sm:text-sm transition-all outline-none bg-surface border-default shadow-sm ${
                 error
-                  ? "!border-red-500 !ring-2 !ring-red-500/40 !shadow-[0_0_8px_rgba(239,68,68,0.2)] !bg-red-50/20"
-                  : "border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/40 focus:shadow-[0_0_8px_rgba(var(--primary-rgb),0.2)]"
+                  ? "!border-red-500 !ring-4 !ring-red-500/20 !shadow-md !bg-red-50/10"
+                  : "hover:border-primary-300 focus:border-primary focus:ring-4 focus:ring-primary/20 focus:shadow-md"
               } ${className}`}
             />
             <button
               type="button"
               onClick={() => setVisible(!visible)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-500 focus:outline-none"
+              className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition-colors focus:outline-none"
+              tabIndex={-1} // Para que al usar Tab el usuario no se detenga en el ojo
             >
-              {visible ? <Eye size={18} /> : <EyeClosed size={18} />}
+              {visible ? <Eye size={20} /> : <EyeClosed size={20} />}
             </button>
           </div>
 
           {error && (
-            <p className="mt-1.5 text-xs text-red-600 font-semibold animate-in fade-in slide-in-from-top-1">
+            <p className="mt-1.5 text-xs text-red-600 font-semibold animate-in fade-in slide-in-from-top-1 px-1">
               {error.message}
             </p>
           )}

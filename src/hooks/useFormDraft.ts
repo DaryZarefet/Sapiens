@@ -4,19 +4,21 @@ import {
   type UseFormReturn,
   type DefaultValues,
   type FieldValues,
+  type UseFormProps, // Importamos el tipo de las opciones
 } from "react-hook-form";
 
-// Hook para no perder lo que escribimos en los inputs si se recarga la página
 export const useFormDraft = <T extends FieldValues>(
   formName: string,
-  defaultValues: T
+  defaultValues: T,
+  options?: UseFormProps<T> // <-- Tercer argumento opcional
 ): UseFormReturn<T> => {
   const form = useForm<T>({
+    ...options, // <-- Esparcimos las opciones externas (como el mode)
     defaultValues: defaultValues as DefaultValues<T>,
-    mode: "onSubmit",
+    // Si no pasas un modo en las opciones, usará 'onChange' por defecto
+    mode: options?.mode || "onChange",
   });
 
-  // Cada vez que el usuario escribe, guardamos el "borrador" en el localStorage
   useEffect(() => {
     const subscription = form.watch((value) => {
       localStorage.setItem(`form_draft_${formName}`, JSON.stringify(value));
@@ -24,7 +26,6 @@ export const useFormDraft = <T extends FieldValues>(
     return () => subscription.unsubscribe();
   }, [form, formName]);
 
-  // Al cargar el componente, miramos si hay algo guardado para rellenar el form
   useEffect(() => {
     const savedDraft = localStorage.getItem(`form_draft_${formName}`);
     if (savedDraft) {
@@ -39,7 +40,6 @@ export const useFormDraft = <T extends FieldValues>(
   return form;
 };
 
-// Funciones para limpiar los borradores manualmente
 export const clearFormDraft = (formName: string) => {
   localStorage.removeItem(`form_draft_${formName}`);
 };

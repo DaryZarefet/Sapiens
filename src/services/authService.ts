@@ -43,7 +43,7 @@ export const authService = {
     if (!user) throw new Error("El usuario no está registrado");
 
     // Contraseña de prueba fija
-    if (credentials.password !== "123456")
+    if (credentials.password !== "Password123")
       throw new Error("La contraseña es incorrecta");
 
     return {

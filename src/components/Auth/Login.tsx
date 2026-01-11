@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-
 import { TextInput } from "@/shared/inputs/TextInput.tsx";
 import { PasswordInput } from "@/shared/inputs/PasswordInput.tsx";
 import { ButtonAction } from "@/shared/ui/ButtonAction";
@@ -21,49 +20,46 @@ const Login = () => {
     formState: { isValid },
     setError,
     reset,
-  } = useFormDraft<LOGIN_FORM>("login", {
-    email: "",
-    password: "",
-  });
+  } = useFormDraft<LOGIN_FORM>(
+    "login",
+    {
+      email: "",
+      password: "",
+    },
+    { mode: "onChange" }
+  );
 
-  const { login, isAuthenticating, error, clearError } = useAuthContext();
+  const {
+    login,
+    isAuthenticating,
+    error: apiError,
+    clearError,
+  } = useAuthContext();
 
-  // Limpiar errores al montar y desmontar
   useEffect(() => {
     clearError();
+    return () => clearError();
   }, [clearError]);
 
-  useEffect(() => {
-    return () => {
-      clearError();
-    };
-  }, [clearError]);
-
-  // Manejo del envío del formulario
   const onSubmit = async (data: LOGIN_FORM) => {
     if (!isValid) return;
     try {
-      await login(data);
+      await login({ ...data, email: data.email.trim().toLowerCase() });
       clearFormDraft("login");
       reset();
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      if (errorMessage.includes("El usuario no está registrado")) {
-        setError("email", { message: "El usuario no está registrado" });
-      } else if (errorMessage.includes("La contraseña es incorrecta")) {
-        setError("password", { message: "La contraseña es incorrecta" });
+      const msg = err instanceof Error ? err.message : "Error desconocido";
+      if (
+        msg.toLowerCase().includes("registrado") ||
+        msg.toLowerCase().includes("encontrado")
+      ) {
+        setError("email", { message: "Usuario no encontrado" });
+      } else if (msg.toLowerCase().includes("incorrecta")) {
+        setError("password", { message: "Contraseña incorrecta" });
       } else {
-        setError("email", { message: errorMessage });
+        setError("email", { message: msg });
       }
     }
-  };
-
-  const getErrorMessage = () => {
-    if (!error) return null;
-    if (error.includes("Credenciales inválidas"))
-      return "Email o contraseña incorrectos";
-    return error;
   };
 
   return (
@@ -71,10 +67,9 @@ const Login = () => {
       <div className="flex flex-col gap-4 items-center justify-center w-full min-h-screen p-6 bg-surface text-primary">
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col items-center justify-center gap-8 py-6 px-6 sm:px-8 rounded-4xl bg-surface-2 border-default shadow-md w-full max-w-md"
+          className="flex flex-col items-center justify-center gap-8 py-8 px-6 sm:px-10 rounded-4xl bg-surface-2 border-default shadow-md w-full max-w-md"
           noValidate
         >
-          {/* Icono con el color original */}
           <FaUserCircle
             size={90}
             className="fill-blue-950"
@@ -90,10 +85,10 @@ const Login = () => {
               placeholder="tu@email.com"
               className="input-underline focus-ring-primary"
               rules={{
-                required: "El email es requerido",
+                required: "El email es obligatorio",
                 pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Email inválido",
+                  value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i,
+                  message: "Email no válido",
                 },
               }}
             />
@@ -102,73 +97,77 @@ const Login = () => {
               label="Contraseña"
               name="password"
               control={control}
-              placeholder="Tu contraseña"
+              placeholder="Introduce tu contraseña"
               className="input-underline focus-ring-primary"
               rules={{
-                required: "La contraseña es requerida",
-                minLength: { value: 6, message: "Mínimo 6 caracteres" },
+                required: "La contraseña es obligatoria",
+                minLength: { value: 8, message: "Mínimo 8 caracteres" },
+                pattern: {
+                  value: /(?=.*[A-Z])(?=.*[0-9])/,
+                  message: "Debe incluir una mayúscula y un número",
+                },
               }}
             />
           </section>
 
-          {getErrorMessage() && (
-            <div
-              className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
-              role="alert"
-            >
-              {getErrorMessage()}
+          {apiError && (
+            <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {apiError}
             </div>
           )}
 
-          <div className="flex flex-col items-center text-md gap-3 w-full">
-            <div className="w-full flex justify-between text-sm">
-              <Buttonav
-                path="/register"
-                className="text-primary hover:underline hover:text-primary-600 visited:text-muted"
-              >
-                ¿No tienes cuenta?
-              </Buttonav>
-              <Buttonav
-                path="/recuperar"
-                className="text-primary hover:underline hover:text-primary-600 visited:text-muted"
-              >
-                ¿Olvidaste tu contraseña?
-              </Buttonav>
-            </div>
+          <div className="w-full flex justify-center px-1">
+            <Buttonav
+              path="/register"
+              className="text-sm text-primary hover:underline font-medium"
+            >
+              ¿No tienes cuenta? Regístrate
+            </Buttonav>
           </div>
 
-          <div className="w-full">
+          <div className="w-full flex flex-col gap-4">
+            {/* Botón Principal de Login */}
             <ButtonAction
               type="submit"
               color="primary"
               disabled={!isValid || isAuthenticating}
-              className={`w-full btn-primary ${
+              className={`w-full py-3 btn-primary transition-all duration-300 ${
                 !isValid || isAuthenticating
-                  ? "opacity-50 pointer-events-none"
-                  : ""
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:shadow-lg active:scale-[0.99] brightness-110"
               }`}
             >
               {isAuthenticating ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
-                  Iniciando sesión...
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin text-lg">⏳</span>
+                  Cargando...
                 </span>
               ) : (
                 "Iniciar sesión"
               )}
             </ButtonAction>
+
+            {/* Divisor visual decorativo */}
+            <div className="relative flex items-center justify-center w-full my-1">
+              <div className="flex-grow border-t border-gray-200"></div>
+              <span className="flex-shrink mx-4 text-gray-400 text-[10px] uppercase tracking-widest font-bold">
+                O
+              </span>
+              <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            {/* Botón de Google Siempre Activo y con el mismo estilo */}
+            <ButtonAction
+              type="button"
+              color="primary"
+              onClick={() => console.log("Google Login Clicked")}
+              className="w-full py-3 btn-primary flex items-center justify-center gap-4 hover:shadow-lg active:scale-[0.99] transition-all duration-300 brightness-110 shadow-md"
+            >
+              <BsGoogle size={20} className="text-white" />
+              <span className="font-bold">Iniciar sesión con Google</span>
+            </ButtonAction>
           </div>
         </form>
-
-        {/* Botón de Google fuera del form, como estaba antes */}
-        <ButtonAction
-          type="button"
-          color="primary"
-          className="btn-primary flex items-center gap-5 opacity-50 cursor-not-allowed"
-        >
-          <BsGoogle size={24} />
-          Iniciar sesión con Google
-        </ButtonAction>
       </div>
     </AuthWrapper>
   );

@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-
 import { TextInput } from "@/shared/inputs/TextInput.tsx";
 import { PasswordInput } from "@/shared/inputs/PasswordInput.tsx";
 import { ButtonAction } from "@/shared/ui/ButtonAction";
@@ -29,53 +28,45 @@ const Register = () => {
     confirm_password: "",
   });
 
-  const { register, isAuthenticating, error, clearError } = useAuthContext();
+  const {
+    register,
+    isAuthenticating,
+    error: apiError,
+    clearError,
+  } = useAuthContext();
 
-  // Limpiar errores al montar y desmontar
   useEffect(() => {
     clearError();
-  }, [clearError]);
-
-  useEffect(() => {
-    return () => {
-      clearError();
-    };
+    return () => clearError();
   }, [clearError]);
 
   const password = watch("password");
 
-  // Manejo del envío del formulario
   const onSubmit = async (data: REGISTER_FORM) => {
     if (!isValid) return;
 
+    const sanitizedData = {
+      ...data,
+      username: data.username.trim(),
+      email: data.email.trim().toLowerCase(),
+    };
+
     try {
-      await register(data);
+      await register(sanitizedData);
       clearFormDraft("register");
       reset();
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Error desconocido";
 
-      if (errorMessage.includes("email ya está registrado")) {
+      if (errorMessage.toLowerCase().includes("email")) {
         setError("email", { message: "Este email ya está registrado" });
-      } else if (errorMessage.includes("contraseñas no coinciden")) {
-        setError("password", { message: "Las contraseñas no coinciden" });
-        setError("confirm_password", {
-          message: "Las contraseñas no coinciden",
-        });
+      } else if (errorMessage.toLowerCase().includes("usuario")) {
+        setError("username", { message: "Nombre de usuario ya ocupado" });
       } else {
         setError("username", { message: errorMessage });
       }
-
-      console.error("Error en registro:", err);
     }
-  };
-
-  const getErrorMessage = () => {
-    if (!error) return null;
-    if (error.includes("email ya está registrado"))
-      return "Este email ya está en uso.";
-    return error;
   };
 
   return (
@@ -83,7 +74,7 @@ const Register = () => {
       <div className="flex flex-col gap-4 items-center justify-center w-full min-h-screen p-6 bg-surface text-primary">
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col items-center justify-center gap-8 py-6 px-6 sm:px-8 rounded-4xl bg-surface-2 border-default shadow-md w-full max-w-md"
+          className="flex flex-col items-center justify-center gap-8 py-8 px-6 sm:px-10 rounded-4xl bg-surface-2 border-default shadow-md w-full max-w-md"
           noValidate
         >
           <FaUserCircle
@@ -92,7 +83,7 @@ const Register = () => {
             aria-hidden="true"
           />
 
-          <section className="flex flex-col gap-6 w-full">
+          <section className="flex flex-col gap-5 w-full">
             <TextInput
               label="Nombre de usuario"
               name="username"
@@ -103,6 +94,11 @@ const Register = () => {
               rules={{
                 required: "El nombre de usuario es requerido",
                 minLength: { value: 3, message: "Mínimo 3 caracteres" },
+                maxLength: { value: 15, message: "Máximo 15 caracteres" },
+                pattern: {
+                  value: /^[a-zA-Z0-9_]+$/,
+                  message: "Solo letras, números y guiones bajos",
+                },
               }}
             />
 
@@ -116,7 +112,7 @@ const Register = () => {
               rules={{
                 required: "El email es requerido",
                 pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i,
                   message: "Email inválido",
                 },
               }}
@@ -126,11 +122,15 @@ const Register = () => {
               label="Contraseña"
               name="password"
               control={control}
-              placeholder="Tu contraseña"
+              placeholder="Mín. 8 caracteres, Mayús. y Núm."
               className="input-underline focus-ring-primary"
               rules={{
                 required: "La contraseña es requerida",
-                minLength: { value: 6, message: "Mínimo 6 caracteres" },
+                minLength: { value: 8, message: "Mínimo 8 caracteres" },
+                pattern: {
+                  value: /(?=.*[A-Z])(?=.*[0-9])/,
+                  message: "Debe incluir una mayúscula y un número",
+                },
               }}
             />
 
@@ -148,54 +148,64 @@ const Register = () => {
             />
           </section>
 
-          {getErrorMessage() && (
-            <div
-              className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
-              role="alert"
-            >
-              {getErrorMessage()}
+          {apiError && (
+            <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {apiError}
             </div>
           )}
 
-          <div className="flex gap-16">
+          <div className="w-full flex justify-center px-1">
             <Buttonav
               path="/login"
-              className="text-sm text-primary hover:underline hover:text-primary-600 visited:text-muted"
+              className="text-sm text-primary hover:underline font-medium"
             >
-              ¿Ya tienes cuenta?
+              ¿Ya tienes cuenta? Inicia sesión
             </Buttonav>
           </div>
 
-          <div className="w-full">
+          <div className="w-full flex flex-col gap-4">
+            {/* Botón Principal de Registro */}
             <ButtonAction
               type="submit"
               color="primary"
-              className={`w-full btn-primary ${
+              disabled={isAuthenticating || !isValid}
+              className={`w-full py-3 btn-primary transition-all duration-300 ${
                 isAuthenticating || !isValid
                   ? "opacity-50 cursor-not-allowed"
-                  : ""
+                  : "hover:shadow-lg active:scale-[0.99] brightness-110"
               }`}
             >
               {isAuthenticating ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin text-lg">⏳</span>
                   Creando cuenta...
                 </span>
               ) : (
                 "Crear cuenta"
               )}
             </ButtonAction>
+
+            {/* Divisor visual decorativo */}
+            <div className="relative flex items-center justify-center w-full my-1">
+              <div className="flex-grow border-t border-gray-200"></div>
+              <span className="flex-shrink mx-4 text-gray-400 text-[10px] uppercase tracking-widest font-bold">
+                O
+              </span>
+              <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            {/* Botón de Google Siempre Activo */}
+            <ButtonAction
+              type="button"
+              color="primary"
+              onClick={() => console.log("Google Register Clicked")}
+              className="w-full py-3 btn-primary flex items-center justify-center gap-4 hover:shadow-lg active:scale-[0.99] transition-all duration-300 brightness-110 shadow-md"
+            >
+              <BsGoogle size={20} className="text-white" />
+              <span className="font-bold">Crear cuenta con Google</span>
+            </ButtonAction>
           </div>
         </form>
-
-        <ButtonAction
-          type="button"
-          color="primary"
-          className="btn-primary flex items-center gap-5 opacity-50 cursor-not-allowed"
-        >
-          <BsGoogle size={24} />
-          Crear cuenta con Google
-        </ButtonAction>
       </div>
     </AuthWrapper>
   );
