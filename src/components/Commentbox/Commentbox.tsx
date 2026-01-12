@@ -96,14 +96,26 @@ const Commentbox: React.FC = () => {
             <div className="flex items-start gap-4">
               <Avatar user={user} size={10} />
               <div className="flex-1">
-                {/* ✅ Contenedor con línea inferior y textarea sin bordes ni paddings extra */}
-                <div className="border-b border-default focus-within:border-blue-500 transition-colors">
+                <div className="border-b focus-within:border-blue-500 transition-colors">
                   <textarea
                     rows={1}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (text.trim() && user) {
+                          setComments([
+                            commentService.createComment(text, user),
+                            ...comments,
+                          ]);
+                          setText("");
+                        }
+                      }
+                    }}
                     placeholder="Escribe tu comentario..."
-                    className="w-full bg-transparent border-none outline-none ring-0 focus:ring-0 p-0 pb-2 text-primary placeholder:text-muted/50 resize-none text-base appearance-none"
+                    className="w-full bg-transparent border-none outline-none ring-0 focus:ring-0 p-0 pb-1 text-primary placeholder:text-muted/50 resize-none text-base appearance-none"
                   />
                 </div>
                 <div className="mt-4 flex items-center justify-between">

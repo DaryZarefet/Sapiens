@@ -12,7 +12,11 @@ interface BottomSheetProps {
   initialOpen?: boolean;
 }
 
-export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSheetProps) {
+export function MoreOptions({
+  options,
+  onSelect,
+  initialOpen = false,
+}: BottomSheetProps) {
   const [open, setOpen] = useState<boolean>(initialOpen);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const firstOptionRef = useRef<HTMLButtonElement | null>(null);
@@ -59,7 +63,10 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
     close();
   };
 
-  const handleOptionKey = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+  const handleOptionKey = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    idx: number
+  ) => {
     const last = options.length - 1;
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -75,12 +82,17 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
     }
   };
 
-  const portalRoot = (typeof document !== "undefined" && document.getElementById("modal-root")) || document.body;
+  const portalRoot =
+    (typeof document !== "undefined" &&
+      document.getElementById("modal-root")) ||
+    document.body;
 
   const sheet = (
     <>
       <div
-        className={`fixed inset-0 bg-black/50 transition-opacity z-60 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-black/50 transition-opacity z-60 ${
+          open ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
         aria-hidden={!open}
         onClick={close}
       />
@@ -89,7 +101,9 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
         role="dialog"
         aria-modal="true"
         aria-label="Opciones"
-        className={`fixed left-0 right-0 bottom-0 z-70 transform transition-transform ${open ? "translate-y-0" : "translate-y-full"} `}
+        className={`fixed left-0 right-0 bottom-0 z-70 transform transition-transform ${
+          open ? "translate-y-0" : "translate-y-full"
+        } `}
       >
         <div className="max-w-3xl mx-auto">
           <div className="rounded-t-xl bg-surface shadow-lg overflow-hidden">
@@ -100,7 +114,9 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
 
             {/* Title */}
             <div className="px-4 pb-2 bg-surface-2 border-b border-[var(--color-border)]">
-              <h3 className="text-sm font-medium text-primary dark:text-gray-100">Opciones</h3>
+              <h3 className="text-sm font-medium text-primary dark:text-gray-100">
+                Opciones
+              </h3>
             </div>
 
             {/* Options list */}
@@ -125,7 +141,11 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
             </div>
 
             <div className="px-4 py-3">
-              <ButtonAction type="button" onClick={close} className="w-full text-center  px-4 py-2 rounded-lg font-medium focus:outline-none">
+              <ButtonAction
+                type="button"
+                onClick={close}
+                className="w-full text-center  px-4 py-2 rounded-lg font-medium focus:outline-none"
+              >
                 Cerrar
               </ButtonAction>
             </div>
@@ -140,14 +160,16 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
       <button
         ref={triggerRef}
         onClick={openSheet}
-        className={`inline-flex items-center gap-2  rounded-md text-textprimary`}
+        className="inline-flex items-center gap-2 rounded-md text-textprimary focus:outline-none focus:ring-0"
         aria-expanded={open}
         aria-controls="bottom-sheet"
       >
         <MoreVertical size={20} />
       </button>
 
-      {typeof document !== "undefined" ? ReactDOM.createPortal(sheet, portalRoot) : sheet}
+      {typeof document !== "undefined"
+        ? ReactDOM.createPortal(sheet, portalRoot)
+        : sheet}
     </>
   );
 }

@@ -43,7 +43,8 @@ export const CommentCard = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editText, setEditText] = useState(comment.content);
   const [replyText, setReplyText] = useState("");
-
+  const editRef = React.useRef<HTMLTextAreaElement>(null);
+  const replyRef = React.useRef<HTMLInputElement>(null);
   const isOwner = currentUser?.id === comment.user.id;
   const isEditing =
     activeAction?.type === "EDIT" && activeAction?.id === comment.id;
@@ -51,6 +52,17 @@ export const CommentCard = ({
     activeAction?.type === "REPLY" && activeAction?.id === comment.id;
   const isActionDisabled =
     activeAction !== null && activeAction.id !== comment.id;
+
+  useEffect(() => {
+    if (isEditing && editRef.current) {
+      editRef.current.focus();
+      // Movemos el cursor al final
+      const length = editRef.current.value.length;
+      editRef.current.setSelectionRange(length, length);
+    } else if (isReplying && replyRef.current) {
+      replyRef.current.focus();
+    }
+  }, [isEditing, isReplying]);
 
   useEffect(() => {
     setEditText(comment.content);
@@ -110,10 +122,6 @@ export const CommentCard = ({
             </div>
           </div>
 
-          {/* ✅ SOLUCIÓN AL CLIC Y CURSOR: 
-              Usamos 'relative' y forzamos que el contenido (MoreOptions) 
-              se comporte como un bloque que llena todo el contenedor.
-          */}
           <div
             className={`relative w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 ${
               isActionDisabled
@@ -129,12 +137,25 @@ export const CommentCard = ({
 
         <div className="text-[14.5px] text-primary">
           {isEditing ? (
-            <div className="flex flex-col gap-1 border-b border-default focus-within:border-blue-500 transition-colors">
+            <div className="flex flex-col gap-1 border-b focus-within:border-blue-500 transition-colors">
               <textarea
-                autoFocus
+                ref={editRef}
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full bg-transparent border-none outline-none ring-0 focus:ring-0 p-0 pb-2 text-primary placeholder:text-muted/50 resize-none text-base appearance-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (editText.trim() && editText !== comment.content) {
+                      onUpdate(comment.id, editText);
+                    }
+                  }
+                  if (e.key === "Escape") {
+                    e.stopPropagation();
+                    handleCancelAction();
+                  }
+                }}
+                className="w-full bg-transparent border-none outline-none ring-0 focus:ring-0 p-0 pb-1 text-primary resize-none text-base appearance-none"
                 rows={Math.max(1, Math.ceil(editText.length / 60))}
               />
               <div className="flex justify-end gap-3 mb-1">
@@ -145,8 +166,17 @@ export const CommentCard = ({
                   <X size={16} />
                 </button>
                 <button
-                  onClick={() => onUpdate(comment.id, editText)}
-                  className="text-blue-500 hover:text-blue-600 transition-colors"
+                  onClick={() => {
+                    if (editText.trim() && editText !== comment.content) {
+                      onUpdate(comment.id, editText);
+                    }
+                  }}
+                  disabled={!editText.trim() || editText === comment.content}
+                  className={`text-blue-500 transition-colors ${
+                    !editText.trim() || editText === comment.content
+                      ? "opacity-30 cursor-not-allowed"
+                      : "hover:text-blue-600"
+                  }`}
                 >
                   <Check size={16} />
                 </button>
@@ -183,24 +213,33 @@ export const CommentCard = ({
               <div className="flex-shrink-0 w-7 h-7">
                 <Avatar user={currentUser} size={7} />
               </div>
-              <div className="flex-1 flex items-center border-b border-default focus-within:border-blue-500 transition-colors">
+              <div className="flex-1 flex items-center border-b focus-within:border-blue-500 transition-colors">
                 <input
-                  autoFocus
+                  ref={replyRef}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder={`Responder a ${comment.user.name}...`}
                   className="w-full bg-transparent border-none outline-none ring-0 focus:ring-0 text-sm py-1 px-0 text-primary appearance-none"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && replyText.trim())
-                      onReply(comment.id, replyText);
-                    if (e.key === "Escape") handleCancelAction();
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (replyText.trim()) onReply(comment.id, replyText);
+                    }
+                    if (e.key === "Escape") {
+                      e.stopPropagation();
+                      handleCancelAction();
+                    }
                   }}
                 />
                 <button
                   onClick={() =>
                     replyText.trim() && onReply(comment.id, replyText)
                   }
-                  className="text-blue-500 ml-2 p-1 hover:bg-surface rounded-full transition-colors"
+                  disabled={!replyText.trim()}
+                  className={`text-blue-500 ml-2 p-1 rounded-full transition-colors ${
+                    !replyText.trim() ? "opacity-30" : "hover:bg-surface"
+                  }`}
                 >
                   <Send size={14} />
                 </button>
@@ -217,18 +256,26 @@ export const CommentCard = ({
       </article>
 
       {comment.replies && comment.replies.length > 0 && (
-        <div className="flex flex-col gap-2 mt-2">
+        <div className="flex flex-col mt-2 relative">
+          <div className="absolute left-[19px] top-0 bottom-4 w-[2px] bg-default/20" />
+
           {comment.replies.map((reply) => (
-            <CommentCard
-              key={reply.id}
-              comment={reply}
-              onDelete={onDelete}
-              onUpdate={onUpdate}
-              onReply={onReply}
-              isReply={true}
-              activeAction={activeAction}
-              setActiveAction={setActiveAction}
-            />
+            <div key={reply.id} className="relative">
+              <div className="absolute left-[19px] top-[24px] w-4 h-[2px] bg-default/20 rounded-bl-xl" />
+
+              <div className="ml-9">
+                {" "}
+                <CommentCard
+                  comment={reply}
+                  onDelete={onDelete}
+                  onUpdate={onUpdate}
+                  onReply={onReply}
+                  isReply={true}
+                  activeAction={activeAction}
+                  setActiveAction={setActiveAction}
+                />
+              </div>
+            </div>
           ))}
         </div>
       )}
