@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { timeAgo } from "@/shared/utils/utilsfunctions";
 import { MoreOptions } from "../Post/MoreOptions";
 import { useAuthContext } from "@/context/AuthContext";
+import { toast } from "sonner";
 import type { Comment, Option, ActiveAction } from "@/types/types";
 import {
   Bookmark,
   Share2,
   Trash,
   Edit2,
-  MessageSquare,
   Check,
   X,
   Send,
@@ -45,6 +45,7 @@ export const CommentCard = ({
   const [replyText, setReplyText] = useState("");
   const editRef = React.useRef<HTMLTextAreaElement>(null);
   const replyRef = React.useRef<HTMLInputElement>(null);
+
   const isOwner = currentUser?.id === comment.user.id;
   const isEditing =
     activeAction?.type === "EDIT" && activeAction?.id === comment.id;
@@ -53,10 +54,29 @@ export const CommentCard = ({
   const isActionDisabled =
     activeAction !== null && activeAction.id !== comment.id;
 
+  const [userReaction, setUserReaction] = useState<"LIKE" | "DISLIKE" | null>(
+    null
+  );
+  const [likesCount, setLikesCount] = useState(comment.likes || 0);
+  const [dislikesCount, setDislikesCount] = useState(comment.dislikes || 0);
+
+  const handleReaction = (type: "LIKE" | "DISLIKE") => {
+    if (userReaction === type) {
+      setUserReaction(null);
+      if (type === "LIKE") setLikesCount((prev) => prev - 1);
+      else setDislikesCount((prev) => prev - 1);
+    } else {
+      if (userReaction === "LIKE") setLikesCount((prev) => prev - 1);
+      if (userReaction === "DISLIKE") setDislikesCount((prev) => prev - 1);
+      setUserReaction(type);
+      if (type === "LIKE") setLikesCount((prev) => prev + 1);
+      else setDislikesCount((prev) => prev + 1);
+    }
+  };
+
   useEffect(() => {
     if (isEditing && editRef.current) {
       editRef.current.focus();
-      // Movemos el cursor al final
       const length = editRef.current.value.length;
       editRef.current.setSelectionRange(length, length);
     } else if (isReplying && replyRef.current) {
@@ -71,7 +91,7 @@ export const CommentCard = ({
   const options: Option[] = [
     { id: 1, label: "Guardar", Icon: Bookmark },
     { id: 2, label: "Compartir", Icon: Share2 },
-    { id: 5, label: "Responder", Icon: MessageSquare },
+    { id: 5, label: "Responder", Icon: MessageCircle },
   ];
 
   if (isOwner) {
@@ -81,6 +101,13 @@ export const CommentCard = ({
     );
   }
 
+  // Función unificada para activar respuesta
+  const handleReplyTrigger = () => {
+    if (isActionDisabled) return;
+    setReplyText("");
+    setActiveAction({ type: "REPLY", id: comment.id });
+  };
+
   const handleSelect = (option: Option) => {
     if (isActionDisabled) return;
     if (option.id === 3) setIsModalOpen(true);
@@ -88,9 +115,23 @@ export const CommentCard = ({
       setEditText(comment.content);
       setActiveAction({ type: "EDIT", id: comment.id });
     }
-    if (option.id === 5) {
+    if (option.id === 5) handleReplyTrigger();
+  };
+
+  const handleUpdateSubmit = () => {
+    if (editText.trim() && editText !== comment.content) {
+      onUpdate(comment.id, editText);
+      setActiveAction(null);
+      toast.success("Comentario actualizado");
+    }
+  };
+
+  const handleReplySubmit = () => {
+    if (replyText.trim()) {
+      onReply(comment.id, replyText);
       setReplyText("");
-      setActiveAction({ type: "REPLY", id: comment.id });
+      setActiveAction(null);
+      toast.success("Respuesta enviada");
     }
   };
 
@@ -129,7 +170,7 @@ export const CommentCard = ({
                 : "hover:bg-gray-100 dark:hover:bg-surface-2 active:scale-95 cursor-pointer"
             }`}
           >
-            <div className="absolute inset-0 flex items-center justify-center [&>button]:w-full [&>button]:h-full [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:cursor-pointer">
+            <div className="absolute inset-0 flex items-center justify-center">
               <MoreOptions options={options} onSelect={handleSelect} />
             </div>
           </div>
@@ -146,9 +187,7 @@ export const CommentCard = ({
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (editText.trim() && editText !== comment.content) {
-                      onUpdate(comment.id, editText);
-                    }
+                    handleUpdateSubmit();
                   }
                   if (e.key === "Escape") {
                     e.stopPropagation();
@@ -166,11 +205,7 @@ export const CommentCard = ({
                   <X size={16} />
                 </button>
                 <button
-                  onClick={() => {
-                    if (editText.trim() && editText !== comment.content) {
-                      onUpdate(comment.id, editText);
-                    }
-                  }}
+                  onClick={handleUpdateSubmit}
                   disabled={!editText.trim() || editText === comment.content}
                   className={`text-blue-500 transition-colors ${
                     !editText.trim() || editText === comment.content
@@ -187,22 +222,62 @@ export const CommentCard = ({
           )}
         </div>
 
+        {/* FOOTER DEL COMENTARIO CON ACCIONES DINÁMICAS */}
         <div className="flex items-center justify-between text-muted text-xs pt-1">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 cursor-default">
               <Eye size={14} /> <span>{comment.views || 0}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <MessageCircle size={14} />{" "}
-              <span>{comment.replies?.length || 0}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1.5 hover:text-blue-500 transition-colors">
-              <ThumbsUp size={14} /> <span>{comment.likes || 0}</span>
+
+            {/* BOTÓN DE RESPUESTA DINÁMICO */}
+            <button
+              onClick={handleReplyTrigger}
+              className={`flex items-center gap-1.5 transition-colors group ${
+                isActionDisabled ? "cursor-not-allowed" : "hover:text-blue-500"
+              }`}
+            >
+              <MessageCircle
+                size={14}
+                className={`transition-all ${
+                  isReplying
+                    ? "fill-blue-500 text-blue-500"
+                    : "group-hover:scale-110"
+                }`}
+              />
+              <span className={isReplying ? "text-blue-500 font-medium" : ""}>
+                {comment.replies?.length || 0}
+              </span>
             </button>
-            <button className="flex items-center gap-1.5 hover:text-red-500 transition-colors">
-              <ThumbsDown size={14} /> <span>{comment.dislikes || 0}</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => handleReaction("LIKE")}
+              className={`flex items-center gap-1.5 transition-colors ${
+                userReaction === "LIKE"
+                  ? "text-blue-500 font-bold"
+                  : "hover:text-blue-500"
+              }`}
+            >
+              <ThumbsUp
+                size={14}
+                fill={userReaction === "LIKE" ? "currentColor" : "none"}
+              />
+              <span>{likesCount}</span>
+            </button>
+            <button
+              onClick={() => handleReaction("DISLIKE")}
+              className={`flex items-center gap-1.5 transition-colors ${
+                userReaction === "DISLIKE"
+                  ? "text-red-500 font-bold"
+                  : "hover:text-red-500"
+              }`}
+            >
+              <ThumbsDown
+                size={14}
+                fill={userReaction === "DISLIKE" ? "currentColor" : "none"}
+              />
+              <span>{dislikesCount}</span>
             </button>
           </div>
         </div>
@@ -224,7 +299,7 @@ export const CommentCard = ({
                     if (e.key === "Enter") {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (replyText.trim()) onReply(comment.id, replyText);
+                      handleReplySubmit();
                     }
                     if (e.key === "Escape") {
                       e.stopPropagation();
@@ -233,9 +308,7 @@ export const CommentCard = ({
                   }}
                 />
                 <button
-                  onClick={() =>
-                    replyText.trim() && onReply(comment.id, replyText)
-                  }
+                  onClick={handleReplySubmit}
                   disabled={!replyText.trim()}
                   className={`text-blue-500 ml-2 p-1 rounded-full transition-colors ${
                     !replyText.trim() ? "opacity-30" : "hover:bg-surface"
@@ -258,13 +331,10 @@ export const CommentCard = ({
       {comment.replies && comment.replies.length > 0 && (
         <div className="flex flex-col mt-2 relative">
           <div className="absolute left-[19px] top-0 bottom-4 w-[2px] bg-default/20" />
-
           {comment.replies.map((reply) => (
             <div key={reply.id} className="relative">
               <div className="absolute left-[19px] top-[24px] w-4 h-[2px] bg-default/20 rounded-bl-xl" />
-
               <div className="ml-9">
-                {" "}
                 <CommentCard
                   comment={reply}
                   onDelete={onDelete}
@@ -283,7 +353,11 @@ export const CommentCard = ({
       <ConfirmDelete
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onConfirm={() => onDelete(comment.id)}
+        onConfirm={() => {
+          onDelete(comment.id);
+          setIsModalOpen(false);
+          toast.error("Comentario eliminado");
+        }}
       />
     </div>
   );
