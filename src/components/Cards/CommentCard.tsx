@@ -162,7 +162,6 @@ export const CommentCard = ({
               </span>
             </div>
           </div>
-
           <div
             className={`relative w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 ${
               isActionDisabled
@@ -170,7 +169,7 @@ export const CommentCard = ({
                 : "hover:bg-gray-100 dark:hover:bg-surface-2 active:scale-95 cursor-pointer"
             }`}
           >
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center [&>button]:w-full [&>button]:h-full [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:cursor-pointer">
               <MoreOptions options={options} onSelect={handleSelect} />
             </div>
           </div>
