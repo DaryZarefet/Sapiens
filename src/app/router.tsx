@@ -46,6 +46,9 @@ const FollowingList = lazy(
 const OtherProfile = lazy(
   () => import("@/components/ProfileUser/OtherProfile")
 );
+const ProfilePublicaciones = lazy(
+  () => import("@/components/ProfileUser/Publicaciones")
+);
 
 //CHAT
 // const Chat = lazy(() => import("@/components/Chat/Chat"));
@@ -114,6 +117,7 @@ export const router = createBrowserRouter([
 
       //PROFILE
       { path: "/perfil", element: <Profile /> },
+      { path: "/perfil/publicaciones", element: <ProfilePublicaciones /> },
       { path: "/perfil/:categoria", element: <Profile /> },
       { path: "/perfil/editar", element: <EditProfile /> },
       { path: "/perfil/siguiendo", element: <FollowingList /> },

@@ -1,5 +1,5 @@
 import { ScrollCard } from "../Cards/ScrollCard";
-import { examplePosts } from "@/mock/mockpublic";
+import { usePostStore } from "@/mock/usePostStore";
 
 const Home = () => {
   const navs = [
@@ -8,7 +8,9 @@ const Home = () => {
     { name: "Eventos", path: "/eventos" },
   ];
 
-  return <ScrollCard posts={examplePosts} navs={navs} />;
+  const posts = usePostStore((s) => s.posts);
+
+  return <ScrollCard posts={posts} navs={navs} />;
 };
 
 export default Home;
