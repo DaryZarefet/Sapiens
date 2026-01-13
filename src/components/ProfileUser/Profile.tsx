@@ -4,13 +4,16 @@ import { ScrollCard } from "../Cards/ScrollCard";
 import { examplePosts } from "@/mock/mockpublic";
 import { usePostStore } from "@/mock/usePostStore";
 
-// INTERACES
+// INTERFACES
 import type { User } from "@/types/types";
 
 // ICONS
 import { Edit, Flag, MoreHorizontal, UserLock } from "lucide-react";
 import { PanelOptions } from "../Headers/PanelOptions";
 import { useEffect, useRef, useState } from "react";
+
+// ASSETS - Importamos la imagen por defecto
+import defaultBg from "@/assets/images/image.png";
 
 const Navs = ({
   path,
@@ -24,7 +27,8 @@ const Navs = ({
   return (
     <Buttonav
       path={path}
-      className="p-3 py-2 flex items-center gap-2 bg-surface-2 border-default rounded-xl hover:bg-surface-2">
+      className="p-3 py-2 flex items-center gap-2 bg-surface-2 border-default rounded-xl hover:bg-surface-2"
+    >
       <span className="text-sm text-primary">{title}</span>
       <span className="text-sm font-bold text-primary">{number}</span>
     </Buttonav>
@@ -39,11 +43,16 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
   const rightActionsRef = useRef<HTMLDivElement | null>(null);
 
   const allPosts = usePostStore((s) => s.posts);
-  const publicacionesCount = allPosts.filter((p) => p.user?.id === user.id)
-    .length;
+  const publicacionesCount = allPosts.filter(
+    (p) => p.user?.id === user.id
+  ).length;
 
   const profilenavs = [
-    { path: "/perfil/publicaciones", title: "Publicaciones", number: publicacionesCount },
+    {
+      path: "/perfil/publicaciones",
+      title: "Publicaciones",
+      number: publicacionesCount,
+    },
     { path: "/perfil/siguiendo", title: "Siguiendo", number: 20 },
     { path: "/perfil/seguidores", title: "Seguidores", number: 20 },
     { path: "/perfil/me-gusta", title: "Me gusta", number: 10 },
@@ -55,8 +64,6 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
     { name: "Guardados", path: "/perfil/guardados" },
     { name: "Me gusta", path: "/perfil/me-gusta" },
   ];
-
-  // keep profile simple; actions live in /perfil/publicaciones
 
   const handleMouseEnter = (panel: string) => {
     setOpenPanel(panel);
@@ -94,9 +101,14 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
         <div className={isDesktop ? "ml-0" : ""}>
           <div className="w-full overflow-hidden rounded-b-md">
             <img
-              src={background}
+              // SOLUCIÓN: Si background es null/undefined, usa defaultBg
+              src={background || defaultBg}
               alt={`${name} background`}
               className="w-full h-44 md:h-56 object-cover"
+              // Por si la URL existe pero la imagen no carga
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = defaultBg;
+              }}
             />
           </div>
 
@@ -104,7 +116,8 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
             <div
               className={
                 "absolute flex flex-row left-11 transform -translate-y-1/2 -top-8 gap-10"
-              }>
+              }
+            >
               <img
                 src={avatar}
                 className="w-32 h-32 rounded-full object-cover"
@@ -124,7 +137,8 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
                   nav.title === "Publicaciones" ? (
                     <div
                       key={nav.path}
-                      className="p-3 py-2 flex items-center gap-2 bg-surface-2 border-default rounded-xl">
+                      className="p-3 py-2 flex items-center gap-2 bg-surface-2 border-default rounded-xl"
+                    >
                       <span className="text-sm text-primary">{nav.title}</span>
                       <span className="text-sm font-bold text-primary">
                         {nav.number}
@@ -134,15 +148,14 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
                     <Navs key={nav.path} {...nav} />
                   )
                 )}
-
-                {/* Action buttons next to Publicaciones */}
               </div>
 
               <div className="flex gap-2 " ref={rightActionsRef}>
                 {type ? (
                   <Buttonav
                     path="/perfil/editar"
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition">
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition"
+                  >
                     <Edit size={18} className="text-primary" />
                     <span className="text-sm font-medium text-primary">
                       Editar
@@ -152,9 +165,14 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
                   <>
                     <div
                       className="relative inline-block"
-                      onMouseEnter={() => handleMouseEnter("more")}>
-                      <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition">
-                        <MoreHorizontal size={18} />
+                      onMouseEnter={() => handleMouseEnter("more")}
+                    >
+                      {/* HOVER EFFECT: Se agregó el cambio de color al pasar el mouse */}
+                      <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-surface-2 border-default hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all group active:scale-95">
+                        <MoreHorizontal
+                          size={18}
+                          className="group-hover:text-blue-500 transition-colors"
+                        />
                       </button>
                       {openPanel === "more" && (
                         <PanelOptions title="Más" buttons={buttonsoptions} />
@@ -163,10 +181,12 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
 
                     <div
                       className="inline-block"
-                      onMouseEnter={() => handleMouseEnter("follow")}>
+                      onMouseEnter={() => handleMouseEnter("follow")}
+                    >
                       <Buttonav
                         path="/perfil/editar"
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition">
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition"
+                      >
                         <span className="text-sm font-medium ">Seguir</span>
                       </Buttonav>
                     </div>
@@ -178,7 +198,9 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
         </div>
       </div>
 
-      <ScrollCard posts={examplePosts} navs={infonavs} />
+      <div className="max-w-7xl mx-auto mt-6">
+        <ScrollCard posts={examplePosts} navs={infonavs} />
+      </div>
     </section>
   );
 };
