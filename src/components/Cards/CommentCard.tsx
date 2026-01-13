@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { timeAgo } from "@/shared/utils/utilsfunctions";
 import { MoreOptions } from "../Post/MoreOptions";
 import { useAuthContext } from "@/context/AuthContext";
@@ -16,6 +16,7 @@ import {
   MessageCircle,
   ThumbsUp,
   ThumbsDown,
+  Paperclip, // Importamos Paperclip
 } from "lucide-react";
 import { Avatar } from "../Avatar";
 import { ConfirmDelete } from "../Notifications/ConfirmDelete";
@@ -23,8 +24,9 @@ import { ConfirmDelete } from "../Notifications/ConfirmDelete";
 interface CommentCardProps {
   comment: Comment;
   onDelete: (id: number) => void;
-  onUpdate: (id: number, content: string) => void;
-  onReply: (id: number, content: string) => void;
+  // Actualizamos interfaces para aceptar imagen
+  onUpdate: (id: number, content: string, image?: string) => void;
+  onReply: (id: number, content: string, image?: string) => void;
   isReply?: boolean;
   activeAction: ActiveAction;
   setActiveAction: (action: ActiveAction) => void;
@@ -41,10 +43,21 @@ export const CommentCard = ({
 }: CommentCardProps) => {
   const { user: currentUser } = useAuthContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Estados para Edición
   const [editText, setEditText] = useState(comment.content);
+  const [editImage, setEditImage] = useState<string | undefined>(comment.image);
+
+  // Estados para Respuesta
   const [replyText, setReplyText] = useState("");
-  const editRef = React.useRef<HTMLTextAreaElement>(null);
-  const replyRef = React.useRef<HTMLInputElement>(null);
+  const [replyImage, setReplyImage] = useState<string | undefined>(undefined);
+
+  // Refs
+  const editRef = useRef<HTMLTextAreaElement>(null);
+  const replyRef = useRef<HTMLInputElement>(null);
+  const fileInputEditRef = useRef<HTMLInputElement>(null);
+  const fileInputReplyRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null); // Para el scroll focus
 
   const isOwner = currentUser?.id === comment.user.id;
   const isEditing =
@@ -53,6 +66,10 @@ export const CommentCard = ({
     activeAction?.type === "REPLY" && activeAction?.id === comment.id;
   const isActionDisabled =
     activeAction !== null && activeAction.id !== comment.id;
+
+  // Lógica de cambios para activar/desactivar botón guardar
+  const hasChanges =
+    editText !== comment.content || editImage !== comment.image;
 
   const [userReaction, setUserReaction] = useState<"LIKE" | "DISLIKE" | null>(
     null
@@ -74,19 +91,46 @@ export const CommentCard = ({
     }
   };
 
+  // Efecto: Focus, Cursor al final y Scroll Automático
   useEffect(() => {
     if (isEditing && editRef.current) {
       editRef.current.focus();
       const length = editRef.current.value.length;
       editRef.current.setSelectionRange(length, length);
+      setEditImage(comment.image); // Reset image on open
+      // Scroll focus
+      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     } else if (isReplying && replyRef.current) {
       replyRef.current.focus();
+      // Scroll focus
+      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [isEditing, isReplying]);
 
   useEffect(() => {
     setEditText(comment.content);
-  }, [comment.content]);
+    setEditImage(comment.image);
+  }, [comment.content, comment.image]);
+
+  // Manejo de Archivos (Igual que Commentbox)
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    mode: "EDIT" | "REPLY"
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("El archivo debe ser una imagen");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (mode === "EDIT") setEditImage(reader.result as string);
+        else setReplyImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const options: Option[] = [
     { id: 1, label: "Guardar", Icon: Bookmark },
@@ -101,10 +145,10 @@ export const CommentCard = ({
     );
   }
 
-  // Función unificada para activar respuesta
   const handleReplyTrigger = () => {
     if (isActionDisabled) return;
     setReplyText("");
+    setReplyImage(undefined);
     setActiveAction({ type: "REPLY", id: comment.id });
   };
 
@@ -113,32 +157,43 @@ export const CommentCard = ({
     if (option.id === 3) setIsModalOpen(true);
     if (option.id === 4) {
       setEditText(comment.content);
+      setEditImage(comment.image);
       setActiveAction({ type: "EDIT", id: comment.id });
     }
     if (option.id === 5) handleReplyTrigger();
   };
 
   const handleUpdateSubmit = () => {
-    if (editText.trim() && editText !== comment.content) {
-      onUpdate(comment.id, editText);
+    // Validación estricta: debe haber texto o imagen, Y debe haber cambios
+    if ((editText.trim() || editImage) && hasChanges) {
+      onUpdate(comment.id, editText, editImage);
       setActiveAction(null);
       toast.success("Comentario actualizado");
     }
   };
 
+  // Dentro de CommentCard.tsx, busca esta función:
   const handleReplySubmit = () => {
-    if (replyText.trim()) {
-      onReply(comment.id, replyText);
+    if (replyText.trim() || replyImage) {
+      // IMPORTANTE: Asegúrate de pasar replyImage aquí como tercer argumento
+      onReply(comment.id, replyText, replyImage);
+
       setReplyText("");
+      setReplyImage(undefined);
       setActiveAction(null);
       toast.success("Respuesta enviada");
     }
   };
 
-  const handleCancelAction = () => setActiveAction(null);
+  const handleCancelAction = () => {
+    setActiveAction(null);
+    setReplyImage(undefined);
+    setEditImage(comment.image);
+  };
 
   return (
     <div
+      ref={cardRef}
       className={`flex flex-col ${
         isReply ? "ml-8 border-l border-default/20 pl-4 mt-2" : "mt-4"
       }`}
@@ -177,7 +232,28 @@ export const CommentCard = ({
 
         <div className="text-[14.5px] text-primary">
           {isEditing ? (
-            <div className="flex flex-col gap-1 border-b focus-within:border-blue-500 transition-colors">
+            <div className="flex flex-col gap-3 border-b border-blue-500/30 transition-colors pb-2">
+              {/* PREVIEW IMAGEN EN EDICIÓN */}
+              {editImage && (
+                <div className="relative inline-block self-start mb-1">
+                  <img
+                    src={editImage}
+                    alt="Preview"
+                    className="max-h-52 w-auto rounded-xl border border-default object-contain shadow-sm bg-surface-2"
+                  />
+                  <button
+                    onClick={() => {
+                      setEditImage(undefined);
+                      if (fileInputEditRef.current)
+                        fileInputEditRef.current.value = "";
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-all active:scale-90"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
               <textarea
                 ref={editRef}
                 value={editText}
@@ -193,42 +269,90 @@ export const CommentCard = ({
                     handleCancelAction();
                   }
                 }}
-                className="w-full bg-transparent border-none outline-none ring-0 focus:ring-0 p-0 pb-1 text-primary resize-none text-base appearance-none"
+                className="w-full bg-transparent border-none outline-none ring-0 focus:ring-0 p-0 text-primary resize-none text-base appearance-none"
                 rows={Math.max(1, Math.ceil(editText.length / 60))}
               />
-              <div className="flex justify-end gap-3 mb-1">
-                <button
-                  onClick={handleCancelAction}
-                  className="text-muted/50 hover:text-primary transition-colors"
-                >
-                  <X size={16} />
-                </button>
-                <button
-                  onClick={handleUpdateSubmit}
-                  disabled={!editText.trim() || editText === comment.content}
-                  className={`text-blue-500 transition-colors ${
-                    !editText.trim() || editText === comment.content
-                      ? "opacity-30 cursor-not-allowed"
-                      : "hover:text-blue-600"
-                  }`}
-                >
-                  <Check size={16} />
-                </button>
+
+              <div className="flex justify-between items-center pt-1">
+                {/* BOTÓN CLIP (Estilo exacto Commentbox) */}
+                <div>
+                  <input
+                    type="file"
+                    ref={fileInputEditRef}
+                    onChange={(e) => handleFileChange(e, "EDIT")}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputEditRef.current?.click()}
+                    className={`group relative p-2.5 rounded-full transition-all duration-300 ease-out active:scale-90 ${
+                      editImage
+                        ? "text-blue-500 bg-blue-50 dark:bg-blue-500/10 shadow-sm"
+                        : "text-muted hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-500"
+                    }`}
+                  >
+                    <Paperclip
+                      size={20}
+                      className={`transition-transform duration-300 ${
+                        editImage
+                          ? "rotate-45"
+                          : "group-hover:-rotate-12 group-hover:scale-110"
+                      }`}
+                    />
+                    {editImage && (
+                      <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 border-2 border-surface rounded-full animate-pulse" />
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleCancelAction}
+                    className="text-muted/50 hover:text-primary transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                  <button
+                    onClick={handleUpdateSubmit}
+                    disabled={(!editText.trim() && !editImage) || !hasChanges}
+                    className={`text-blue-500 transition-colors ${
+                      (!editText.trim() && !editImage) || !hasChanges
+                        ? "opacity-30 cursor-not-allowed"
+                        : "hover:text-blue-600 hover:scale-110 transform"
+                    }`}
+                  >
+                    <Check size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
-            <p className="whitespace-pre-wrap break-words">{comment.content}</p>
+            <div className="flex flex-col gap-3">
+              <p className="whitespace-pre-wrap break-words">
+                {comment.content}
+              </p>
+              {/* MOSTRAR IMAGEN SI EXISTE */}
+              {comment.image && (
+                <div className="max-w-md overflow-hidden rounded-xl border border-default bg-surface-2 shadow-sm">
+                  <img
+                    src={comment.image}
+                    alt="Adjunto"
+                    className="w-full h-auto object-cover cursor-zoom-in"
+                    onClick={() => window.open(comment.image, "_blank")}
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* FOOTER DEL COMENTARIO CON ACCIONES DINÁMICAS */}
+        {/* FOOTER DEL COMENTARIO */}
         <div className="flex items-center justify-between text-muted text-xs pt-1">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5 cursor-default">
               <Eye size={14} /> <span>{comment.views || 0}</span>
             </div>
 
-            {/* BOTÓN DE RESPUESTA DINÁMICO */}
             <button
               onClick={handleReplyTrigger}
               className={`flex items-center gap-1.5 transition-colors group ${
@@ -281,8 +405,30 @@ export const CommentCard = ({
           </div>
         </div>
 
+        {/* AREA DE RESPUESTA */}
         {isReplying && (
-          <div className="mt-2 p-3 bg-surface-2 rounded-xl border border-default">
+          <div className="mt-2 p-3 bg-surface-2 rounded-xl border border-default flex flex-col gap-3">
+            {/* PREVIEW IMAGEN EN RESPUESTA */}
+            {replyImage && (
+              <div className="relative inline-block self-start">
+                <img
+                  src={replyImage}
+                  alt="Reply Preview"
+                  className="max-h-40 w-auto rounded-xl border border-default object-contain shadow-sm bg-surface"
+                />
+                <button
+                  onClick={() => {
+                    setReplyImage(undefined);
+                    if (fileInputReplyRef.current)
+                      fileInputReplyRef.current.value = "";
+                  }}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-all active:scale-90"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-7 h-7">
                 <Avatar user={currentUser} size={7} />
@@ -306,11 +452,40 @@ export const CommentCard = ({
                     }
                   }}
                 />
+
+                {/* BOTÓN CLIP EN RESPUESTA (Estilo exacto Commentbox, tamaño ajustado) */}
+                <input
+                  type="file"
+                  ref={fileInputReplyRef}
+                  onChange={(e) => handleFileChange(e, "REPLY")}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputReplyRef.current?.click()}
+                  className={`group relative p-1.5 mr-1 rounded-full transition-all duration-300 ease-out active:scale-90 ${
+                    replyImage
+                      ? "text-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                      : "text-muted hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-500"
+                  }`}
+                >
+                  <Paperclip
+                    size={16}
+                    className={`transition-transform duration-300 ${
+                      replyImage
+                        ? "rotate-45"
+                        : "group-hover:-rotate-12 group-hover:scale-110"
+                    }`}
+                  />
+                </button>
+
                 <button
                   onClick={handleReplySubmit}
-                  disabled={!replyText.trim()}
-                  className={`text-blue-500 ml-2 p-1 rounded-full transition-colors ${
-                    !replyText.trim() ? "opacity-30" : "hover:bg-surface"
+                  disabled={!replyText.trim() && !replyImage}
+                  className={`text-blue-500 ml-1 p-1 rounded-full transition-colors ${
+                    !replyText.trim() && !replyImage
+                      ? "opacity-30"
+                      : "hover:bg-surface"
                   }`}
                 >
                   <Send size={14} />
@@ -327,6 +502,7 @@ export const CommentCard = ({
         )}
       </article>
 
+      {/* RECURSIVIDAD Y JERARQUÍA VISUAL INTACTA */}
       {comment.replies && comment.replies.length > 0 && (
         <div className="flex flex-col mt-2 relative">
           <div className="absolute left-[19px] top-0 bottom-4 w-[2px] bg-default/20" />

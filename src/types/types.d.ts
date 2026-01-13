@@ -35,6 +35,7 @@ export type Comment = {
   id: number;
   user: User;
   content: string;
+  image?: string; // <--- Añadimos esto (es opcional con el ?)
   media?: Media[];
   time: string;
   likes: number;
