@@ -16,7 +16,7 @@ import {
   MessageCircle,
   ThumbsUp,
   ThumbsDown,
-  Paperclip, // Importamos Paperclip
+  Paperclip,
 } from "lucide-react";
 import { Avatar } from "../Avatar";
 import { ConfirmDelete } from "../Notifications/ConfirmDelete";
@@ -24,7 +24,6 @@ import { ConfirmDelete } from "../Notifications/ConfirmDelete";
 interface CommentCardProps {
   comment: Comment;
   onDelete: (id: number) => void;
-  // Actualizamos interfaces para aceptar imagen
   onUpdate: (id: number, content: string, image?: string) => void;
   onReply: (id: number, content: string, image?: string) => void;
   isReply?: boolean;
@@ -42,23 +41,36 @@ export const CommentCard = ({
   setActiveAction,
 }: CommentCardProps) => {
   const { user: currentUser } = useAuthContext();
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Estados para Edición
+  // --- ESTADOS ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHighlighting, setIsHighlighting] = useState(false);
+
+  // Estados de Edición
   const [editText, setEditText] = useState(comment.content);
   const [editImage, setEditImage] = useState<string | undefined>(comment.image);
 
-  // Estados para Respuesta
+  // Estados de Respuesta
   const [replyText, setReplyText] = useState("");
   const [replyImage, setReplyImage] = useState<string | undefined>(undefined);
 
-  // Refs
+  // Estados de Reacción
+  const [userReaction, setUserReaction] = useState<"LIKE" | "DISLIKE" | null>(
+    null
+  );
+  const [likesCount, setLikesCount] = useState(comment.likes || 0);
+  const [dislikesCount, setDislikesCount] = useState(comment.dislikes || 0);
+
+  // --- REFS ---
   const editRef = useRef<HTMLTextAreaElement>(null);
   const replyRef = useRef<HTMLInputElement>(null);
   const fileInputEditRef = useRef<HTMLInputElement>(null);
   const fileInputReplyRef = useRef<HTMLInputElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null); // Para el scroll focus
+  const cardRef = useRef<HTMLDivElement>(null);
+  const hasScrolledIntoView = useRef(false);
+  const isFirstRender = useRef(true);
 
+  // --- VARIABLES DERIVADAS ---
   const isOwner = currentUser?.id === comment.user.id;
   const isEditing =
     activeAction?.type === "EDIT" && activeAction?.id === comment.id;
@@ -66,53 +78,90 @@ export const CommentCard = ({
     activeAction?.type === "REPLY" && activeAction?.id === comment.id;
   const isActionDisabled =
     activeAction !== null && activeAction.id !== comment.id;
-
-  // Lógica de cambios para activar/desactivar botón guardar
   const hasChanges =
     editText !== comment.content || editImage !== comment.image;
 
-  const [userReaction, setUserReaction] = useState<"LIKE" | "DISLIKE" | null>(
-    null
-  );
-  const [likesCount, setLikesCount] = useState(comment.likes || 0);
-  const [dislikesCount, setDislikesCount] = useState(comment.dislikes || 0);
+  // --- EFECTOS ---
+
+  // Efecto Unificado: Resaltar al crear o al editar
+  useEffect(() => {
+    const commentTime = new Date(comment.time).getTime();
+    const now = Date.now();
+    const diffInSeconds = (now - commentTime) / 1000;
+
+    if (diffInSeconds > 5) {
+      isFirstRender.current = false;
+      setIsHighlighting(false);
+      return;
+    }
+
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    // Lógica de resaltado para nuevos y editados
+    const triggerHighlight = (shouldScroll: boolean) => {
+      setIsHighlighting(true);
+
+      if (shouldScroll && !hasScrolledIntoView.current) {
+        hasScrolledIntoView.current = true;
+        setTimeout(() => {
+          cardRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }, 150);
+      }
+
+      const timer = setTimeout(() => setIsHighlighting(false), 800);
+      return () => clearTimeout(timer);
+    };
+
+    // Si el tiempo es muy reciente (< 2s) es un "Nuevo Comentario"
+    if (diffInSeconds < 2) {
+      triggerHighlight(true);
+    } else {
+      // Si el tiempo es mayor pero el efecto saltó, es una "Edición"
+      triggerHighlight(false);
+    }
+  }, [comment.content, comment.image, comment.time]);
+
+  // Manejo de Foco al activar Editar/Responder
+  useEffect(() => {
+    if (activeAction?.id === comment.id) {
+      if (activeAction.type === "EDIT" && editRef.current) {
+        editRef.current.focus();
+        const length = editRef.current.value.length;
+        editRef.current.setSelectionRange(length, length);
+      } else if (activeAction.type === "REPLY" && replyRef.current) {
+        replyRef.current.focus();
+      }
+    }
+  }, [activeAction?.id, activeAction?.type, comment.id]);
+
+  // --- HANDLERS (Lógica de Negocio) ---
 
   const handleReaction = (type: "LIKE" | "DISLIKE") => {
     if (userReaction === type) {
       setUserReaction(null);
-      if (type === "LIKE") setLikesCount((prev) => prev - 1);
-      else setDislikesCount((prev) => prev - 1);
+      if (type === "LIKE") {
+        setLikesCount((prev) => prev - 1);
+      } else {
+        setDislikesCount((prev) => prev - 1);
+      }
     } else {
       if (userReaction === "LIKE") setLikesCount((prev) => prev - 1);
       if (userReaction === "DISLIKE") setDislikesCount((prev) => prev - 1);
       setUserReaction(type);
-      if (type === "LIKE") setLikesCount((prev) => prev + 1);
-      else setDislikesCount((prev) => prev + 1);
+      if (type === "LIKE") {
+        setLikesCount((prev) => prev + 1);
+      } else {
+        setDislikesCount((prev) => prev + 1);
+      }
     }
   };
 
-  // Efecto: Focus, Cursor al final y Scroll Automático
-  useEffect(() => {
-    if (isEditing && editRef.current) {
-      editRef.current.focus();
-      const length = editRef.current.value.length;
-      editRef.current.setSelectionRange(length, length);
-      setEditImage(comment.image); // Reset image on open
-      // Scroll focus
-      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    } else if (isReplying && replyRef.current) {
-      replyRef.current.focus();
-      // Scroll focus
-      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [isEditing, isReplying]);
-
-  useEffect(() => {
-    setEditText(comment.content);
-    setEditImage(comment.image);
-  }, [comment.content, comment.image]);
-
-  // Manejo de Archivos (Igual que Commentbox)
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     mode: "EDIT" | "REPLY"
@@ -125,13 +174,56 @@ export const CommentCard = ({
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (mode === "EDIT") setEditImage(reader.result as string);
-        else setReplyImage(reader.result as string);
+        if (mode === "EDIT") {
+          setEditImage(reader.result as string);
+          requestAnimationFrame(() => {
+            if (editRef.current) {
+              editRef.current.focus();
+              const len = editRef.current.value.length;
+              editRef.current.setSelectionRange(len, len);
+            }
+          });
+        } else {
+          setReplyImage(reader.result as string);
+          requestAnimationFrame(() => replyRef.current?.focus());
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleUpdateSubmit = () => {
+    if ((editText.trim() || editImage) && hasChanges) {
+      onUpdate(comment.id, editText, editImage);
+      setActiveAction(null);
+      toast.success("Comentario actualizado");
+    }
+  };
+
+  const handleReplySubmit = () => {
+    if (replyText.trim() || replyImage) {
+      onReply(comment.id, replyText, replyImage);
+      setReplyText("");
+      setReplyImage(undefined);
+      setActiveAction(null);
+      toast.success("Respuesta enviada");
+    }
+  };
+
+  const handleReplyTrigger = () => {
+    if (isActionDisabled) return;
+    setReplyText("");
+    setReplyImage(undefined);
+    setActiveAction({ type: "REPLY", id: comment.id });
+  };
+
+  const handleCancelAction = () => {
+    setActiveAction(null);
+    setReplyImage(undefined);
+    setEditImage(comment.image);
+  };
+
+  // Configuración de Menú de Opciones
   const options: Option[] = [
     { id: 1, label: "Guardar", Icon: Bookmark },
     { id: 2, label: "Compartir", Icon: Share2 },
@@ -145,13 +237,6 @@ export const CommentCard = ({
     );
   }
 
-  const handleReplyTrigger = () => {
-    if (isActionDisabled) return;
-    setReplyText("");
-    setReplyImage(undefined);
-    setActiveAction({ type: "REPLY", id: comment.id });
-  };
-
   const handleSelect = (option: Option) => {
     if (isActionDisabled) return;
     if (option.id === 3) setIsModalOpen(true);
@@ -163,46 +248,23 @@ export const CommentCard = ({
     if (option.id === 5) handleReplyTrigger();
   };
 
-  const handleUpdateSubmit = () => {
-    // Validación estricta: debe haber texto o imagen, Y debe haber cambios
-    if ((editText.trim() || editImage) && hasChanges) {
-      onUpdate(comment.id, editText, editImage);
-      setActiveAction(null);
-      toast.success("Comentario actualizado");
-    }
-  };
-
-  // Dentro de CommentCard.tsx, busca esta función:
-  const handleReplySubmit = () => {
-    if (replyText.trim() || replyImage) {
-      // IMPORTANTE: Asegúrate de pasar replyImage aquí como tercer argumento
-      onReply(comment.id, replyText, replyImage);
-
-      setReplyText("");
-      setReplyImage(undefined);
-      setActiveAction(null);
-      toast.success("Respuesta enviada");
-    }
-  };
-
-  const handleCancelAction = () => {
-    setActiveAction(null);
-    setReplyImage(undefined);
-    setEditImage(comment.image);
-  };
-
   return (
     <div
       ref={cardRef}
-      className={`flex flex-col ${
+      className={`flex flex-col transition-all duration-500 ${
         isReply ? "ml-8 border-l border-default/20 pl-4 mt-2" : "mt-4"
       }`}
     >
       <article
-        className={`flex flex-col py-4 px-5 gap-3 border border-default rounded-2xl bg-surface shadow-sm transition-all duration-300 ${
+        className={`flex flex-col py-4 px-5 gap-3 border rounded-2xl bg-surface shadow-sm transition-all duration-700 ${
           isActionDisabled ? "opacity-60 pointer-events-none" : "opacity-100"
+        } ${
+          isHighlighting
+            ? "border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
+            : "border-default"
         }`}
       >
+        {/* Cabecera del Comentario */}
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 w-10 h-10">
@@ -230,10 +292,10 @@ export const CommentCard = ({
           </div>
         </div>
 
+        {/* Cuerpo del Comentario / Modo Edición */}
         <div className="text-[14.5px] text-primary">
           {isEditing ? (
             <div className="flex flex-col gap-3 border-b border-blue-500/30 transition-colors pb-2">
-              {/* PREVIEW IMAGEN EN EDICIÓN */}
               {editImage && (
                 <div className="relative inline-block self-start mb-1">
                   <img
@@ -242,10 +304,12 @@ export const CommentCard = ({
                     className="max-h-52 w-auto rounded-xl border border-default object-contain shadow-sm bg-surface-2"
                   />
                   <button
+                    type="button"
                     onClick={() => {
                       setEditImage(undefined);
                       if (fileInputEditRef.current)
                         fileInputEditRef.current.value = "";
+                      editRef.current?.focus();
                     }}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-all active:scale-90"
                   >
@@ -274,7 +338,6 @@ export const CommentCard = ({
               />
 
               <div className="flex justify-between items-center pt-1">
-                {/* BOTÓN CLIP (Estilo exacto Commentbox) */}
                 <div>
                   <input
                     type="file"
@@ -284,7 +347,11 @@ export const CommentCard = ({
                     className="hidden"
                   />
                   <button
-                    onClick={() => fileInputEditRef.current?.click()}
+                    type="button"
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      fileInputEditRef.current?.click();
+                    }}
                     className={`group relative p-2.5 rounded-full transition-all duration-300 ease-out active:scale-90 ${
                       editImage
                         ? "text-blue-500 bg-blue-50 dark:bg-blue-500/10 shadow-sm"
@@ -307,12 +374,14 @@ export const CommentCard = ({
 
                 <div className="flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={handleCancelAction}
                     className="text-muted/50 hover:text-primary transition-colors"
                   >
                     <X size={16} />
                   </button>
                   <button
+                    type="button"
                     onClick={handleUpdateSubmit}
                     disabled={(!editText.trim() && !editImage) || !hasChanges}
                     className={`text-blue-500 transition-colors ${
@@ -331,7 +400,6 @@ export const CommentCard = ({
               <p className="whitespace-pre-wrap break-words">
                 {comment.content}
               </p>
-              {/* MOSTRAR IMAGEN SI EXISTE */}
               {comment.image && (
                 <div className="max-w-md overflow-hidden rounded-xl border border-default bg-surface-2 shadow-sm">
                   <img
@@ -346,13 +414,12 @@ export const CommentCard = ({
           )}
         </div>
 
-        {/* FOOTER DEL COMENTARIO */}
+        {/* Footer: Métricas y Reacciones */}
         <div className="flex items-center justify-between text-muted text-xs pt-1">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5 cursor-default">
               <Eye size={14} /> <span>{comment.views || 0}</span>
             </div>
-
             <button
               onClick={handleReplyTrigger}
               className={`flex items-center gap-1.5 transition-colors group ${
@@ -405,10 +472,9 @@ export const CommentCard = ({
           </div>
         </div>
 
-        {/* AREA DE RESPUESTA */}
+        {/* Formulario de Respuesta */}
         {isReplying && (
           <div className="mt-2 p-3 bg-surface-2 rounded-xl border border-default flex flex-col gap-3">
-            {/* PREVIEW IMAGEN EN RESPUESTA */}
             {replyImage && (
               <div className="relative inline-block self-start">
                 <img
@@ -417,10 +483,12 @@ export const CommentCard = ({
                   className="max-h-40 w-auto rounded-xl border border-default object-contain shadow-sm bg-surface"
                 />
                 <button
+                  type="button"
                   onClick={() => {
                     setReplyImage(undefined);
                     if (fileInputReplyRef.current)
                       fileInputReplyRef.current.value = "";
+                    replyRef.current?.focus();
                   }}
                   className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-all active:scale-90"
                 >
@@ -452,8 +520,6 @@ export const CommentCard = ({
                     }
                   }}
                 />
-
-                {/* BOTÓN CLIP EN RESPUESTA (Estilo exacto Commentbox, tamaño ajustado) */}
                 <input
                   type="file"
                   ref={fileInputReplyRef}
@@ -462,7 +528,11 @@ export const CommentCard = ({
                   className="hidden"
                 />
                 <button
-                  onClick={() => fileInputReplyRef.current?.click()}
+                  type="button"
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    fileInputReplyRef.current?.click();
+                  }}
                   className={`group relative p-1.5 mr-1 rounded-full transition-all duration-300 ease-out active:scale-90 ${
                     replyImage
                       ? "text-blue-500 bg-blue-50 dark:bg-blue-500/10"
@@ -478,8 +548,8 @@ export const CommentCard = ({
                     }`}
                   />
                 </button>
-
                 <button
+                  type="button"
                   onClick={handleReplySubmit}
                   disabled={!replyText.trim() && !replyImage}
                   className={`text-blue-500 ml-1 p-1 rounded-full transition-colors ${
@@ -492,6 +562,7 @@ export const CommentCard = ({
                 </button>
               </div>
               <button
+                type="button"
                 onClick={handleCancelAction}
                 className="text-muted/40 hover:text-primary transition-colors"
               >
@@ -502,7 +573,7 @@ export const CommentCard = ({
         )}
       </article>
 
-      {/* RECURSIVIDAD Y JERARQUÍA VISUAL INTACTA */}
+      {/* Lista de Respuestas (Recursión) */}
       {comment.replies && comment.replies.length > 0 && (
         <div className="flex flex-col mt-2 relative">
           <div className="absolute left-[19px] top-0 bottom-4 w-[2px] bg-default/20" />
@@ -525,6 +596,7 @@ export const CommentCard = ({
         </div>
       )}
 
+      {/* Modal de Confirmación */}
       <ConfirmDelete
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
