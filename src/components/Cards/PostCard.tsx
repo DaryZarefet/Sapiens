@@ -1,15 +1,18 @@
 import { timeAgo } from "@/shared/utils/utilsfunctions";
 import { MoreOptions } from "../Post/MoreOptions";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Stats } from "../Post/Stats";
 import { Avatar } from "../Avatar";
+import { Dialog } from "@/shared/dialog/Dialog";
+import { ButtonAction } from "@/shared/ui/ButtonAction";
 
 //INTERFACES
 import type { Post } from "@/types/types";
 import type { Option } from "@/types/types";
 
 // ICONS
-import { Bookmark, Share2, Trash } from "lucide-react";
+import { Bookmark, Share2, Trash, Edit } from "lucide-react";
 
 const CategoryBubble = ({ category }: { category: string }) => {
   return (
@@ -20,7 +23,17 @@ const CategoryBubble = ({ category }: { category: string }) => {
   );
 };
 
-export const PostCard = ({ post }: { post: Post }) => {
+export const PostCard = ({
+  post,
+  selectable,
+  onSelect,
+  onDelete,
+}: {
+  post: Post;
+  selectable?: boolean;
+  onSelect?: (post: Post) => void;
+  onDelete?: (id: number) => void;
+}) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -28,26 +41,50 @@ export const PostCard = ({ post }: { post: Post }) => {
     navigate(path);
   };
 
-  const { id, title, description, time, categories, user, institution, type } = post;
+  const { id, title, description, time, categories, user, institution, type } =
+    post;
   const { name } = user;
 
-  const options: Option[] = [
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // Opciones base disponibles en todas las páginas
+  const baseOptions: Option[] = [
     { id: 1, label: "Guardar", Icon: Bookmark },
     { id: 2, label: "Compartir", Icon: Share2 },
-    { id: 3, label: "Eliminar publicación", Icon: Trash },
   ];
 
+  // En /perfil/publicaciones añadimos Editar y Eliminar.
+  // En otras rutas solo mostramos las opciones base (Guardar, Compartir).
+  let options: Option[] = [...baseOptions];
+  if (pathname === "/perfil/publicaciones") {
+    options.push({ id: 3, label: "Editar publicación", Icon: Edit });
+    options.push({ id: 4, label: "Eliminar publicación", Icon: Trash });
+  }
+
   const handleSelect = (option: Option) => {
+    if (option.label === "Eliminar publicación") {
+      setShowConfirm(true);
+      return;
+    }
+
+    if (option.label === "Editar publicación") {
+      navigate("/publicar/documento", { state: { post } });
+      return;
+    }
+
     console.log(option);
   };
 
   const containerClasses =
     pathname === "/comentarios"
-      ? "flex flex-col py-6 px-4 gap-3 border-default rounded-lg bg-surface"
-      : "flex flex-col py-6 px-4 gap-3 border-b border-gray-200";
+      ? "flex flex-col py-3 px-4 gap-2 border-default rounded-lg bg-surface"
+      : "flex flex-col py-3 px-4 gap-2 border-b border-gray-200";
 
   return (
-    <article id={String(id)} className={containerClasses} aria-labelledby={`post-title-${id}`}>
+    <article
+      id={String(id)}
+      className={containerClasses}
+      aria-labelledby={`post-title-${id}`}>
       {/* HEADER */}
       <div className="flex text-primary justify-between items-center">
         <div className="flex items-center gap-3">
@@ -73,11 +110,46 @@ export const PostCard = ({ post }: { post: Post }) => {
         </div>
 
         <MoreOptions options={options} onSelect={handleSelect} />
+        <Dialog
+          title="Confirmar eliminación"
+          open={showConfirm}
+          onClose={() => setShowConfirm(false)}>
+          <div className="flex flex-col gap-4">
+            <p>¿Estás seguro de que quieres eliminar esta publicación?</p>
+
+            <div className="flex justify-end gap-2">
+              <ButtonAction
+                type="button"
+                className="px-4 py-2"
+                onClick={() => setShowConfirm(false)}>
+                Cancelar
+              </ButtonAction>
+
+              <ButtonAction
+                type="button"
+                className="px-4 py-2"
+                onClick={() => {
+                  if (onDelete) onDelete(id as number);
+                  setShowConfirm(false);
+                }}>
+                Aceptar
+              </ButtonAction>
+            </div>
+          </div>
+        </Dialog>
       </div>
 
       {/* BODY (clicable) */}
-      <div onClick={() => handleNavigate(`/detalles/${id}`)} role="button" className="flex flex-col gap-2 text-primary cursor-pointer">
-        <h3 className="font-bold text-lg flex items-center gap-2" id={`post-title-click-${id}`}>
+      <div
+        onClick={() => {
+          if (selectable && onSelect) return onSelect(post);
+          handleNavigate(`/detalles/${id}`);
+        }}
+        role="button"
+        className="flex flex-col gap-2 text-primary cursor-pointer">
+        <h3
+          className="font-bold text-lg flex items-center gap-2"
+          id={`post-title-click-${id}`}>
           {title}
         </h3>
         <p className="text-sm text-muted">{description}</p>
@@ -85,7 +157,10 @@ export const PostCard = ({ post }: { post: Post }) => {
 
       <div className="flex flex-wrap justify-between items-center gap-2">
         <div className="flex items-center gap-2">
-          {(categories?.length ?? 0) > 0 && categories!.map((category) => <CategoryBubble key={category} category={category} />)}
+          {(categories?.length ?? 0) > 0 &&
+            categories!.map((category) => (
+              <CategoryBubble key={category} category={category} />
+            ))}
         </div>
       </div>
 

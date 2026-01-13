@@ -14,21 +14,40 @@ const CreateArticle = lazy(() => import("@/components/Post/CreateArticle"));
 const Commentbox = lazy(() => import("@/components/Commentbox/Commentbox"));
 
 //NOTIFICATIONS
-const Notifications = lazy(() => import("@/components/Notifications/Notifications"));
-const NotificationsArticles = lazy(() => import("@/components/Notifications/NotificationsArticles"));
+const Notifications = lazy(
+  () => import("@/components/Notifications/Notifications")
+);
+const NotificationsArticles = lazy(
+  () => import("@/components/Notifications/NotificationsArticles")
+);
 
 //SETTINGS
 const Settings = lazy(() => import("@/components/Settings/Settings"));
-const SettingsSystem = lazy(() => import("@/components/Settings/SettingsSystem"));
-const SettingsAccount = lazy(() => import("@/components/Settings/SettingsAccount"));
-const ChangePassword = lazy(() => import("@/components/Settings/ChangePassword"));
+const SettingsSystem = lazy(
+  () => import("@/components/Settings/SettingsSystem")
+);
+const SettingsAccount = lazy(
+  () => import("@/components/Settings/SettingsAccount")
+);
+const ChangePassword = lazy(
+  () => import("@/components/Settings/ChangePassword")
+);
 
 //PROFILE
 const Profile = lazy(() => import("@/components/ProfileUser/PageProfile"));
 const EditProfile = lazy(() => import("@/components/ProfileUser/EditProfile"));
-const FollowersList = lazy(() => import("@/components/ProfileUser/FollowersList"));
-const FollowingList = lazy(() => import("@/components/ProfileUser/FollowingList"));
-const OtherProfile = lazy(() => import("@/components/ProfileUser/OtherProfile"));
+const FollowersList = lazy(
+  () => import("@/components/ProfileUser/FollowersList")
+);
+const FollowingList = lazy(
+  () => import("@/components/ProfileUser/FollowingList")
+);
+const OtherProfile = lazy(
+  () => import("@/components/ProfileUser/OtherProfile")
+);
+const ProfilePublicaciones = lazy(
+  () => import("@/components/ProfileUser/Publicaciones")
+);
 
 //CHAT
 // const Chat = lazy(() => import("@/components/Chat/Chat"));
@@ -54,16 +73,25 @@ export const router = createBrowserRouter([
 
       //CREATE ARTICLE
       { path: "/publicar/texto", element: <CreateArticle document={false} /> },
-      { path: "/publicar/documento", element: <CreateArticle document={true} /> },
+      {
+        path: "/publicar/documento",
+        element: <CreateArticle document={true} />,
+      },
 
       //ARTICLE INFO
       { path: "/detalles/:id", element: <Commentbox /> },
 
       //NOTIFICATIONS
       { path: "/notificaciones", element: <Notifications /> },
-      { path: "/notificaciones/publicaciones", element: <NotificationsArticles /> },
+      {
+        path: "/notificaciones/publicaciones",
+        element: <NotificationsArticles />,
+      },
       // { path: "/notificaciones/eventos", element: <NotificationsEvents /> },
-      { path: "/notificaciones/comentarios", element: <NotificationsArticles /> },
+      {
+        path: "/notificaciones/comentarios",
+        element: <NotificationsArticles />,
+      },
 
       //SETTINGS
       { path: "/ajustes", element: <Settings /> },
@@ -73,6 +101,7 @@ export const router = createBrowserRouter([
 
       //PROFILE
       { path: "/perfil", element: <Profile /> },
+      { path: "/perfil/publicaciones", element: <ProfilePublicaciones /> },
       { path: "/perfil/:categoria", element: <Profile /> },
       { path: "/perfil/editar", element: <EditProfile /> },
       { path: "/perfil/siguiendo", element: <FollowingList /> },
