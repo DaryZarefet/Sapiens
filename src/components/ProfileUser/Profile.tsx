@@ -75,8 +75,8 @@ export const Profile = ({
   }
 
   const background = user.background;
-  // Prioridad: Alias -> Name -> Username -> "Usuario"
-  const name = user.alias || user.name || user.username || "Usuario";
+  // Prioridad: Alias -> Username -> Name -> "Usuario"
+  const name = user.alias || user.username || user.name || "Usuario";
   const note = user.note;
   const avatar = user.avatar;
 

@@ -55,6 +55,22 @@ const EditProfile: React.FC = () => {
   const handleSave = async () => {
     try {
       toast.loading("Guardando cambios...", { id: "save-profile" });
+
+      console.log(
+        "[EditProfile] Guardando con alias:",
+        alias,
+        "Longitud:",
+        alias.length
+      );
+      console.log(
+        "[EditProfile] Avatar file:",
+        avatarFile,
+        "Tipo:",
+        avatarFile?.type,
+        "Tamaño:",
+        avatarFile?.size
+      );
+
       await userService.updateProfile({
         alias,
         username: name,
@@ -70,6 +86,9 @@ const EditProfile: React.FC = () => {
       navigate("/perfil"); // Redirigir al perfil al guardar
     } catch (error) {
       console.error("[EditProfile] Error al guardar:", error);
+      if (error instanceof Error) {
+        console.error("[EditProfile] Error message:", error.message);
+      }
       toast.error("Error al actualizar el perfil", { id: "save-profile" });
     }
   };

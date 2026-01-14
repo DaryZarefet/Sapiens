@@ -19,32 +19,48 @@ export const userService = {
     try {
       const formData = new FormData();
 
-      if (params.name) formData.append("name", params.name); // 'name' might not be used if 'Nombre_de_Usuario' is the main one, but keeping for safety
-      if (params.alias) formData.append("Alias", params.alias);
+      // Enviamos siempre los campos, incluso si están vacíos, para permitir borrarlos
+      if (params.name !== undefined) formData.append("name", params.name);
+
+      // Alias: enviamos incluso si está vacío para permitir borrarlo
+      if (params.alias !== undefined) {
+        formData.append("Alias", params.alias);
+      }
 
       // Backend espera Nombre_de_Usuario
-      if (params.username) {
+      if (params.username !== undefined) {
         formData.append("Nombre_de_Usuario", params.username);
       }
 
-      if (params.birth_date)
+      if (params.birth_date !== undefined)
         formData.append("Fecha_nacimiento", params.birth_date);
-      if (params.sex) formData.append("Sexo", params.sex);
-      if (params.about) formData.append("Nota", params.about);
+      if (params.sex !== undefined) formData.append("Sexo", params.sex);
+      if (params.about !== undefined) formData.append("Nota", params.about);
 
-      if (params.avatar) {
-        formData.append("Avatar", params.avatar);
+      // Avatar: solo si hay un archivo nuevo
+      if (params.avatar instanceof File) {
+        formData.append("Avatar", params.avatar, params.avatar.name);
       }
 
       console.log("[UserService] Updating profile...", params);
 
-      // El interceptor de apiServer añade el token automáticamente
-      // Usamos 'put' o 'patch' según tu backend. Usaré 'put' como default.
-      const response = await apiServer.put("/api/profile/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      // Log FormData contents for debugging
+      console.log("[UserService] FormData contents:");
+      formData.forEach((value, key) => {
+        if (value instanceof File) {
+          console.log(
+            `  ${key}:`,
+            `File(${value.name}, ${value.type}, ${value.size} bytes)`
+          );
+        } else {
+          console.log(`  ${key}:`, value);
+        }
       });
+
+      // El interceptor de apiServer añade el token automáticamente
+      // NO establecemos Content-Type manualmente para FormData
+      // El navegador lo establece automáticamente con el boundary correcto
+      const response = await apiServer.put("/api/profile/", formData);
 
       console.log("[UserService] Update response:", response.data);
 

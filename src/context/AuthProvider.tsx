@@ -22,9 +22,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (response.success) {
         // Guardar el token que viene en la respuesta
         localStorage.setItem("auth_token", response.data.token);
-        // Establecer el usuario
-        setUser(response.data.user);
-        console.log("[AuthProvider] Login exitoso, usuario establecido");
+        console.log(
+          "[AuthProvider] Login exitoso, obteniendo perfil completo..."
+        );
+        // Llamar a verifyUser para obtener el perfil completo con todos los campos
+        await verifyUser();
       } else {
         throw new Error(response.message);
       }
