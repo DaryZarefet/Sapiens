@@ -1,11 +1,11 @@
 export type LOGIN_FORM = {
-  email: string;
+  gmail: string;
   password: string;
 };
 
 export type REGISTER_FORM = {
-  username: string;
-  email: string;
+  Nombre_de_Usuario: string;
+  gmail: string;
   password: string;
   confirm_password: string;
 };

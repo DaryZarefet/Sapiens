@@ -22,8 +22,8 @@ const Register = () => {
     setError,
     reset,
   } = useFormDraft<REGISTER_FORM>("register", {
-    username: "",
-    email: "",
+    Nombre_de_Usuario: "", // Cambiado
+    gmail: "", // Cambiado
     password: "",
     confirm_password: "",
   });
@@ -45,26 +45,23 @@ const Register = () => {
   const onSubmit = async (data: REGISTER_FORM) => {
     if (!isValid) return;
 
-    const sanitizedData = {
-      ...data,
-      username: data.username.trim(),
-      email: data.email.trim().toLowerCase(),
-    };
-
     try {
-      await register(sanitizedData);
+      // Enviamos la data tal cual, ya tiene los nombres correctos
+      await register(data);
       clearFormDraft("register");
       reset();
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Error desconocido";
+      const lowerMsg = errorMessage.toLowerCase();
 
-      if (errorMessage.toLowerCase().includes("email")) {
-        setError("email", { message: "Este email ya está registrado" });
-      } else if (errorMessage.toLowerCase().includes("usuario")) {
-        setError("username", { message: "Nombre de usuario ya ocupado" });
+      // Manejo de errores simplificado
+      if (lowerMsg.includes("gmail")) {
+        setError("gmail", { message: "Este correo ya está registrado" });
+      } else if (lowerMsg.includes("nombre_de_usuario")) {
+        setError("Nombre_de_Usuario", { message: "Usuario ya ocupado" });
       } else {
-        setError("username", { message: errorMessage });
+        setError("Nombre_de_Usuario", { message: errorMessage });
       }
     }
   };
@@ -86,7 +83,7 @@ const Register = () => {
           <section className="flex flex-col gap-5 w-full">
             <TextInput
               label="Nombre de usuario"
-              name="username"
+              name="Nombre_de_Usuario" // Cambiado
               control={control}
               type="text"
               placeholder="tu_usuario"
@@ -104,7 +101,7 @@ const Register = () => {
 
             <TextInput
               label="Email"
-              name="email"
+              name="gmail" // Cambiado
               control={control}
               type="email"
               placeholder="tu@email.com"

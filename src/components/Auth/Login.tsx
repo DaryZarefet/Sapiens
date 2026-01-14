@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { TextInput } from "@/shared/inputs/TextInput.tsx";
 import { PasswordInput } from "@/shared/inputs/PasswordInput.tsx";
 import { ButtonAction } from "@/shared/ui/ButtonAction";
@@ -6,7 +6,8 @@ import { Buttonav } from "@/shared/ui/Buttonnav";
 import { AuthWrapper } from "./AuthWrapper";
 
 import { useAuthContext } from "@/context/AuthContext";
-import { useFormDraft, clearFormDraft } from "@/hooks/useFormDraft";
+import { useFormDraft } from "@/hooks/useFormDraft";
+// clearFormDraft
 
 import { FaUserCircle } from "react-icons/fa";
 import { BsGoogle } from "react-icons/bs";
@@ -14,20 +15,18 @@ import { BsGoogle } from "react-icons/bs";
 import type { LOGIN_FORM } from "@/types/formstypes";
 
 const Login = () => {
+  const [isLoading, setLoading] = useState(false);
+
   const {
     control,
     handleSubmit,
     formState: { isValid },
-    setError,
+    // setError,
     reset,
-  } = useFormDraft<LOGIN_FORM>(
-    "login",
-    {
-      email: "",
-      password: "",
-    },
-    { mode: "onChange" }
-  );
+  } = useFormDraft<LOGIN_FORM>("login", {
+    gmail: "",
+    password: "",
+  });
 
   const {
     login,
@@ -42,23 +41,22 @@ const Login = () => {
   }, [clearError]);
 
   const onSubmit = async (data: LOGIN_FORM) => {
-    if (!isValid) return;
+    setLoading(true);
+    const payload = {
+      gmail: data.gmail,
+      password: data.password,
+    };
+
     try {
-      await login({ ...data, email: data.email.trim().toLowerCase() });
-      clearFormDraft("login");
+      const response = await login(payload);
+      console.log(response);
+
+      // clearFormDraft("login");
       reset();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error desconocido";
-      if (
-        msg.toLowerCase().includes("registrado") ||
-        msg.toLowerCase().includes("encontrado")
-      ) {
-        setError("email", { message: "Usuario no encontrado" });
-      } else if (msg.toLowerCase().includes("incorrecta")) {
-        setError("password", { message: "Contraseña incorrecta" });
-      } else {
-        setError("email", { message: msg });
-      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,7 +77,7 @@ const Login = () => {
           <section className="flex flex-col gap-6 w-full">
             <TextInput
               label="Email"
-              name="email"
+              name="gmail" // Cambiado a 'gmail'
               control={control}
               type="email"
               placeholder="tu@email.com"
@@ -101,17 +99,14 @@ const Login = () => {
               className="input-underline focus-ring-primary"
               rules={{
                 required: "La contraseña es obligatoria",
+                // Mantenemos las reglas de validación front igual que en el Register
                 minLength: { value: 8, message: "Mínimo 8 caracteres" },
-                pattern: {
-                  value: /(?=.*[A-Z])(?=.*[0-9])/,
-                  message: "Debe incluir una mayúscula y un número",
-                },
               }}
             />
           </section>
 
           {apiError && (
-            <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm animate-in fade-in duration-300">
               {apiError}
             </div>
           )}
@@ -126,11 +121,10 @@ const Login = () => {
           </div>
 
           <div className="w-full flex flex-col gap-4">
-            {/* Botón Principal de Login */}
             <ButtonAction
               type="submit"
               color="primary"
-              disabled={!isValid || isAuthenticating}
+              disabled={isLoading}
               className={`w-full py-3 btn-primary transition-all duration-300 ${
                 !isValid || isAuthenticating
                   ? "opacity-50 cursor-not-allowed"
@@ -147,7 +141,6 @@ const Login = () => {
               )}
             </ButtonAction>
 
-            {/* Divisor visual decorativo */}
             <div className="relative flex items-center justify-center w-full my-1">
               <div className="flex-grow border-t border-gray-200"></div>
               <span className="flex-shrink mx-4 text-gray-400 text-[10px] uppercase tracking-widest font-bold">
@@ -156,7 +149,6 @@ const Login = () => {
               <div className="flex-grow border-t border-gray-200"></div>
             </div>
 
-            {/* Botón de Google Siempre Activo y con el mismo estilo */}
             <ButtonAction
               type="button"
               color="primary"

@@ -14,13 +14,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = !!user && !!localStorage.getItem("auth_token");
   const clearError = () => setError(null);
 
-  const login = async (credentials: { email: string; password: string }) => {
+  const login = async (credentials: { gmail: string; password: string }) => {
     try {
       setIsAuthenticating(true);
       setError(null);
       const response = await authService.login(credentials);
       if (response.success) {
-        localStorage.setItem("auth_token", response.data.token);
+        // El token ya se guarda en authService.login, pero lo duplicamos aquí por seguridad
+        const token = response.data.token || localStorage.getItem("auth_token");
+        if (token) {
+          localStorage.setItem("auth_token", token);
+        }
         setUser(response.data.user);
         window.location.href = "/inicio";
       } else {

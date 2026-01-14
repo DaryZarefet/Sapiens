@@ -5,7 +5,7 @@ import type { REGISTER_FORM } from "@/types/formstypes";
 export interface AuthContextProps {
   user: User | null;
   setUser: (user: User | null) => void;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
+  login: (credentials: { gmail: string; password: string }) => Promise<void>;
   register: (userData: REGISTER_FORM) => Promise<void>;
   logout: () => Promise<void>;
   verifyUser: () => Promise<void>;
