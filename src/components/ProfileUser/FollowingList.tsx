@@ -1,10 +1,12 @@
 import { ListUser } from "./ListUser";
-import { userlist } from "@/mock/mockusers";
+import { useFollowStore } from "@/mock/useFollowStore";
 
 const FollowingList = () => {
+  const following = useFollowStore((s) => s.following);
+
   return (
     <div className="flex flex-col">
-      <ListUser listuser={userlist} />
+      <ListUser listuser={following} />
     </div>
   );
 };

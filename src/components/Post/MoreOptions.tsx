@@ -24,10 +24,20 @@ export function MoreOptions({
 
   useEffect(() => {
     if (open) {
-      const prev = document.body.style.overflow;
+      const prevOverflow = document.body.style.overflow;
+      const prevPaddingRight = document.body.style.paddingRight;
+
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+
       document.body.style.overflow = "hidden";
+
       return () => {
-        document.body.style.overflow = prev;
+        document.body.style.overflow = prevOverflow;
+        document.body.style.paddingRight = prevPaddingRight || "";
       };
     }
   }, [open]);
@@ -103,8 +113,7 @@ export function MoreOptions({
         aria-label="Opciones"
         className={`fixed left-0 right-0 bottom-0 z-70 transform transition-transform ${
           open ? "translate-y-0" : "translate-y-full"
-        } `}
-      >
+        } `}>
         <div className="max-w-3xl mx-auto">
           <div className="rounded-t-xl bg-surface shadow-lg overflow-hidden">
             {/* Handle */}
@@ -130,8 +139,7 @@ export function MoreOptions({
                   }}
                   onClick={() => handleSelect(opt)}
                   onKeyDown={(e) => handleOptionKey(e, idx)}
-                  className="w-full text-left px-4 py-3 flex items-center gap-3  focus:outline-none"
-                >
+                  className="w-full text-left px-4 py-3 flex items-center gap-3  focus:outline-none">
                   {opt.Icon ? <opt.Icon className="w-5 h-5 " /> : null}
                   <div className="flex-1">
                     <div className="text-sm">{opt.label}</div>
@@ -144,8 +152,7 @@ export function MoreOptions({
               <ButtonAction
                 type="button"
                 onClick={close}
-                className="w-full text-center  px-4 py-2 rounded-lg font-medium focus:outline-none"
-              >
+                className="w-full text-center  px-4 py-2 rounded-lg font-medium focus:outline-none">
                 Cerrar
               </ButtonAction>
             </div>
@@ -162,8 +169,7 @@ export function MoreOptions({
         onClick={openSheet}
         className="inline-flex items-center gap-2 rounded-md text-textprimary focus:outline-none focus:ring-0"
         aria-expanded={open}
-        aria-controls="bottom-sheet"
-      >
+        aria-controls="bottom-sheet">
         <MoreVertical size={20} />
       </button>
 
