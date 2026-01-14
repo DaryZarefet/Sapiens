@@ -1,4 +1,4 @@
-import { apiServer, apiServerJWT } from "@/services/apiServer";
+import { apiServer } from "@/services/apiServer";
 import type { LOGIN_FORM, REGISTER_FORM } from "@/types/formstypes";
 import type { User } from "@/types/types";
 import axios from "axios";
@@ -26,27 +26,25 @@ export const authService = {
       });
 
       const response = await apiServer.post("/api/login/", payload);
-      console.log(
-        "[AuthService] Respuesta cruda del login:",
-        response.data.token_acceso
-      );
-
-      localStorage.setItem("auth_token", response.data.token_acceso);
-
-      console.log("[AuthService] Respuesta del login:", response.data);
+      console.log("[AuthService] Respuesta cruda del login:", response.data);
 
       // Extraer token de múltiples formas posibles según el backend
       const token =
+        response.data.token_acceso ||
         response.data.access ||
         response.data.token ||
         response.data.key ||
         response.data.auth_token;
 
       if (!token) {
+        console.error(
+          "[AuthService] No se encontró token en la respuesta:",
+          response.data
+        );
         throw new Error("No se recibió token del servidor");
       }
 
-      // Guardar token en localStorage
+      // Guardar token en localStorage solo UNA VEZ
       localStorage.setItem("auth_token", token);
       console.log("[AuthService] Token guardado en localStorage");
 
@@ -78,9 +76,10 @@ export const authService = {
 
   async register(
     userData: REGISTER_FORM
-  ): Promise<ApiResponse<{ user: User; token: string }>> {
+  ): Promise<ApiResponse<{ message: string }>> {
     try {
       const payload = {
+        username: userData.Nombre_de_Usuario,
         Nombre_de_Usuario: userData.Nombre_de_Usuario,
         gmail: userData.gmail,
         password: userData.password,
@@ -88,37 +87,23 @@ export const authService = {
       };
 
       console.log("[AuthService] Iniciando registro...", {
+        username: payload.username,
         Nombre_de_Usuario: payload.Nombre_de_Usuario,
         gmail: payload.gmail,
       });
 
-      const response = await apiServer.post("/api/register/", payload);
+      const response = await apiServer.post("/api/register/student/", payload);
 
-      console.log("[AuthService] Respuesta del registro:", response.data);
+      console.log("[AuthService] Respuesta del registro (201):", response.data);
 
-      const token =
-        response.data.access ||
-        response.data.token ||
-        response.data.key ||
-        response.data.auth_token;
-
-      if (!token) {
-        throw new Error("No se recibió token del servidor");
-      }
-
-      localStorage.setItem("auth_token", token);
-      console.log("[AuthService] Token guardado en localStorage");
-
-      const responseData = {
-        user: response.data.user || {
-          id: "",
-          name: userData.Nombre_de_Usuario,
-          email: userData.gmail,
+      // El backend devuelve 201 Created sin token, solo confirma el registro
+      return {
+        success: true,
+        data: {
+          message: response.data.message || "Usuario registrado exitosamente",
         },
-        token: token,
+        message: "OK",
       };
-
-      return { success: true, data: responseData, message: "OK" };
     } catch (error: unknown) {
       console.error("[AuthService] Error en registro:", error);
       if (axios.isAxiosError(error)) {
@@ -148,16 +133,23 @@ export const authService = {
   async verifyToken(): Promise<ApiResponse<{ user: User }>> {
     const token = localStorage.getItem("auth_token");
     // Si no hay token, no disparamos la petición para evitar el error 401
-    if (!token) throw new Error("No hay sesión");
+    if (!token) {
+      console.log("[AuthService] No hay token en localStorage");
+      throw new Error("No hay sesión");
+    }
 
     try {
-      const response = await apiServerJWT.get("/api/profile/");
+      console.log("[AuthService] Verificando token con /api/profile/");
+      const response = await apiServer.get("/api/profile/");
+      console.log("[AuthService] Token válido, usuario verificado");
       return { success: true, data: response.data, message: "OK" };
     } catch (error: unknown) {
+      console.error("[AuthService] Error verificando token:", error);
       if (axios.isAxiosError(error) && error.response?.status === 401) {
+        console.warn("[AuthService] Token inválido (401), eliminando...");
         localStorage.removeItem("auth_token");
       }
-      throw new Error("Token inválido");
+      throw new Error("Token inválido o expirado");
     }
   },
 };

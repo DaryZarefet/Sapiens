@@ -5,6 +5,13 @@ import { Navigate } from "react-router-dom";
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuthContext();
 
+  console.log(
+    "[ProtectedRoute] Estado - isLoading:",
+    isLoading,
+    "isAuthenticated:",
+    isAuthenticated
+  );
+
   // Si la app todavía está viendo si hay un token guardado, mostramos un loading
   if (isLoading) {
     return (
@@ -16,6 +23,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Si no está logueado, lo mandamos directo al login
   if (!isAuthenticated) {
+    console.warn(
+      "[ProtectedRoute] Usuario no autenticado, redirigiendo a /login"
+    );
     return <Navigate to="/login" replace />;
   }
 

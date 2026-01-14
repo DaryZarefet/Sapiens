@@ -20,18 +20,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
       const response = await authService.login(credentials);
       if (response.success) {
-        // El token ya se guarda en authService.login, pero lo duplicamos aquí por seguridad
-        const token = response.data.token || localStorage.getItem("auth_token");
-        if (token) {
-          localStorage.setItem("auth_token", token);
-        }
+        // Guardar el token que viene en la respuesta
+        localStorage.setItem("auth_token", response.data.token);
+        // Establecer el usuario
         setUser(response.data.user);
-        window.location.href = "/inicio";
+        console.log("[AuthProvider] Login exitoso, usuario establecido");
       } else {
         throw new Error(response.message);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error en el login");
+      const errorMsg = err instanceof Error ? err.message : "Error en el login";
+      console.error("[AuthProvider] Error:", errorMsg);
+      setError(errorMsg);
       throw err;
     } finally {
       setIsAuthenticating(false);
@@ -44,9 +44,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
       const response = await authService.register(userData);
       if (response.success) {
-        localStorage.setItem("auth_token", response.data.token);
-        setUser(response.data.user);
-        window.location.href = "/inicio";
+        // El registro fue exitoso (201 Created)
+        // No se guardan credenciales, solo se redirige a login
+        clearAllFormDrafts();
+        window.location.href = "/login";
       } else {
         throw new Error(response.message);
       }
@@ -78,11 +79,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const verifyUser = async () => {
     try {
       const token = localStorage.getItem("auth_token");
-      if (!token) return;
+      console.log("[AuthProvider] Verificando usuario, token existe:", !!token);
+
+      if (!token) {
+        console.log("[AuthProvider] No hay token, usuario no autenticado");
+        setIsLoading(false);
+        return;
+      }
+
       const response = await authService.verifyToken();
-      if (response.success) setUser(response.data.user);
-      else localStorage.removeItem("auth_token");
-    } catch {
+      if (response.success) {
+        console.log("[AuthProvider] Usuario verificado:", response.data.user);
+        setUser(response.data.user);
+      } else {
+        console.warn("[AuthProvider] Verificación fallida");
+        localStorage.removeItem("auth_token");
+        setUser(null);
+      }
+    } catch (error) {
+      console.warn("[AuthProvider] Error verificando usuario:", error);
       localStorage.removeItem("auth_token");
       setUser(null);
     } finally {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { TextInput } from "@/shared/inputs/TextInput.tsx";
 import { PasswordInput } from "@/shared/inputs/PasswordInput.tsx";
 import { ButtonAction } from "@/shared/ui/ButtonAction";
@@ -15,6 +16,7 @@ import { BsGoogle } from "react-icons/bs";
 import type { LOGIN_FORM } from "@/types/formstypes";
 
 const Login = () => {
+  const navigate = useNavigate();
   const [isLoading, setLoading] = useState(false);
 
   const {
@@ -33,7 +35,16 @@ const Login = () => {
     isAuthenticating,
     error: apiError,
     clearError,
+    isAuthenticated,
   } = useAuthContext();
+
+  // Monitorear cuando el usuario esté autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("[Login] Usuario autenticado detectado, navegando...");
+      navigate("/inicio", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     clearError();
@@ -48,13 +59,13 @@ const Login = () => {
     };
 
     try {
-      const response = await login(payload);
-      console.log(response);
-
-      // clearFormDraft("login");
+      console.log("[Login] Iniciando login...");
+      await login(payload);
+      console.log("[Login] Login completado, esperando redirección...");
       reset();
+      // No llamamos a navigate aquí, el useEffect lo hará
     } catch (error) {
-      console.log(error);
+      console.error("[Login] Error en login:", error);
     } finally {
       setLoading(false);
     }

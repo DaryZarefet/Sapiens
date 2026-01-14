@@ -84,7 +84,9 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      //HOME
+      //HOME - RUTA PRINCIPAL
+      { path: "/inicio", element: <Home /> },
+      { path: "/inicio/:categoria", element: <Home /> },
       { path: "/:categoria", element: <Home /> },
 
       //CREATE ARTICLE
