@@ -3,8 +3,7 @@ import { MoreOptions } from "../Post/MoreOptions";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Avatar } from "../Avatar";
-import { Dialog } from "@/shared/dialog/Dialog";
-import { ButtonAction } from "@/shared/ui/ButtonAction";
+import { ConfirmDelete } from "../Notifications/ConfirmDelete";
 
 //INTERFACES
 import type { Post } from "@/types/types";
@@ -148,42 +147,19 @@ export const PostCard = ({
           </div>
         </div>
 
-        <div className="relative w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-gray-100 dark:hover:bg-surface-2 active:scale-95 cursor-pointer">
-          <div className="absolute inset-0 flex items-center justify-center [&>button]:w-full [&>button]:h-full [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:cursor-pointer">
-            <MoreOptions options={options} onSelect={handleSelect} />
-          </div>
-        </div>
-
-        <Dialog
-          title="Confirmar eliminación"
-          open={showConfirm}
+        <MoreOptions options={options} onSelect={handleSelect} />
+        <ConfirmDelete
+          isOpen={showConfirm}
           onClose={() => setShowConfirm(false)}
-        >
-          <div className="flex flex-col gap-4">
-            <p>¿Estás seguro de que quieres eliminar esta publicación?</p>
-
-            <div className="flex justify-end gap-2">
-              <ButtonAction
-                type="button"
-                className="px-4 py-2"
-                onClick={() => setShowConfirm(false)}
-              >
-                Cancelar
-              </ButtonAction>
-
-              <ButtonAction
-                type="button"
-                className="px-4 py-2"
-                onClick={() => {
-                  if (onDelete) onDelete(id as number);
-                  setShowConfirm(false);
-                }}
-              >
-                Aceptar
-              </ButtonAction>
-            </div>
-          </div>
-        </Dialog>
+          onConfirm={() => {
+            if (onDelete) onDelete(id as number);
+            setShowConfirm(false);
+          }}
+          title="¿Eliminar publicación?"
+          message={
+            "Esta acción no se puede deshacer. Tu publicación será borrada permanentemente."
+          }
+        />
       </div>
 
       {/* BODY (clicable) */}

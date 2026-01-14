@@ -28,8 +28,7 @@ const Navs = ({
   return (
     <Buttonav
       path={path}
-      className="p-3 py-2 flex items-center gap-2 bg-surface-2 border-default rounded-xl hover:bg-surface-2"
-    >
+      className="p-3 py-2 flex items-center gap-2 bg-surface-2 border-default rounded-xl hover:bg-surface-2">
       <span className="text-sm text-primary">{title}</span>
       <span className="text-sm font-bold text-primary">{number}</span>
     </Buttonav>
@@ -133,8 +132,7 @@ export const Profile = ({
             <div
               className={
                 "absolute flex flex-row left-11 transform -translate-y-1/2 -top-8 gap-10"
-              }
-            >
+              }>
               <img
                 src={avatar || defaultAvatar}
                 alt={`${name} avatar`}
@@ -158,8 +156,7 @@ export const Profile = ({
                   nav.title === "Publicaciones" ? (
                     <div
                       key={nav.path}
-                      className="p-3 py-2 flex items-center gap-2 bg-surface-2 border-default rounded-xl"
-                    >
+                      className="p-3 py-2 flex items-center gap-2 bg-surface-2 border-default rounded-xl">
                       <span className="text-sm text-primary">{nav.title}</span>
                       <span className="text-sm font-bold text-primary">
                         {nav.number}
@@ -175,8 +172,7 @@ export const Profile = ({
                 {type ? (
                   <Buttonav
                     path="/perfil/editar"
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition"
-                  >
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition">
                     <Edit size={18} className="text-primary" />
                     <span className="text-sm font-medium text-primary">
                       Editar
@@ -186,8 +182,7 @@ export const Profile = ({
                   <>
                     <div
                       className="relative inline-block"
-                      onMouseEnter={() => handleMouseEnter("more")}
-                    >
+                      onMouseEnter={() => handleMouseEnter("more")}>
                       {/* HOVER EFFECT: Se agregó el cambio de color al pasar el mouse */}
                       <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-surface-2 border-default hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all group active:scale-95">
                         <MoreHorizontal
@@ -202,12 +197,10 @@ export const Profile = ({
 
                     <div
                       className="inline-block"
-                      onMouseEnter={() => handleMouseEnter("follow")}
-                    >
+                      onMouseEnter={() => handleMouseEnter("follow")}>
                       <Buttonav
                         path="/perfil/editar"
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition"
-                      >
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2 border-default transition">
                         <span className="text-sm font-medium ">Seguir</span>
                       </Buttonav>
                     </div>
