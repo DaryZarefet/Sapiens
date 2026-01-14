@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 
 // ASSETS - Importamos la imagen por defecto
 import defaultBg from "@/assets/images/image.png";
+import defaultAvatar from "@/assets/images/avatar.png";
 
 const Navs = ({
   path,
@@ -35,14 +36,50 @@ const Navs = ({
   );
 };
 
-export const Profile = ({ user, type }: { user: User; type: boolean }) => {
+export const Profile = ({
+  user,
+  type,
+}: {
+  user: User | null;
+  type: boolean;
+}) => {
+  // HOOKS SIEMPRE AL PRINCIPIO
   const isDesktop = useIsDesktop(1024);
-  const { background, name, note, avatar } = user;
-
   const [openPanel, setOpenPanel] = useState<string | null>(null);
   const rightActionsRef = useRef<HTMLDivElement | null>(null);
-
   const allPosts = usePostStore((s) => s.posts);
+
+  // EFECTOS SIEMPRE AL PRINCIPIO
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        rightActionsRef.current &&
+        !rightActionsRef.current.contains(event.target as Node)
+      ) {
+        setOpenPanel(null); // Usamos setOpenPanel directamente
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-primary">Perfil no disponible</p>
+      </div>
+    );
+  }
+
+  const background = user.background;
+  // Prioridad: Alias -> Name -> Username -> "Usuario"
+  const name = user.alias || user.name || user.username || "Usuario";
+  const note = user.note;
+  const avatar = user.avatar;
+
   const publicacionesCount = allPosts.filter(
     (p) => p.user?.id === user.id
   ).length;
@@ -68,26 +105,6 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
   const handleMouseEnter = (panel: string) => {
     setOpenPanel(panel);
   };
-
-  const handleMouseLeave = () => {
-    setOpenPanel(null);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        rightActionsRef.current &&
-        !rightActionsRef.current.contains(event.target as Node)
-      ) {
-        handleMouseLeave();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   const buttonsoptions = [
     { name: "Denunciar usuario", path: "/perfil/321", icon: Flag },
@@ -119,13 +136,17 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
               }
             >
               <img
-                src={avatar}
-                className="w-32 h-32 rounded-full object-cover"
+                src={avatar || defaultAvatar}
+                alt={`${name} avatar`}
+                className="w-32 h-32 rounded-full object-cover border-4 border-surface"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultAvatar;
+                }}
               />
 
               <div className="md:mt-8 mb-4 pl-0">
                 <h2 className="text-xl md:text-2xl font-semibold text-white px-0">
-                  {name}
+                  {name || "Usuario"}
                 </h2>
                 {note && <p className="text-sm mt-1 text-gray-300">{note}</p>}
               </div>

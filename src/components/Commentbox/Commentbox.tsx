@@ -37,6 +37,8 @@ const Commentbox: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const [comments, setComments] = useState<Comment[]>(() => {
     const saved = localStorage.getItem("local_comments");
     return saved ? JSON.parse(saved) : exampleComments;
@@ -145,7 +147,16 @@ const Commentbox: React.FC = () => {
   return (
     <div className={`bg-surface py-8 ${isDesktop ? "px-10" : "px-4"}`}>
       <div className="max-w-4xl mx-auto">
-        <PostCard post={post} />
+        <PostCard
+          post={post}
+          onReply={() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }}
+        />
 
         <div className="mt-10">
           <h3 className="text-xl font-bold mb-6 text-primary">Comentarios</h3>
@@ -177,6 +188,7 @@ const Commentbox: React.FC = () => {
                   )}
 
                   <textarea
+                    ref={textareaRef}
                     rows={1}
                     value={text}
                     onChange={(e) => setText(e.target.value)}

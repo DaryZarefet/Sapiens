@@ -2,7 +2,6 @@ import { timeAgo } from "@/shared/utils/utilsfunctions";
 import { MoreOptions } from "../Post/MoreOptions";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Stats } from "../Post/Stats";
 import { Avatar } from "../Avatar";
 import { Dialog } from "@/shared/dialog/Dialog";
 import { ButtonAction } from "@/shared/ui/ButtonAction";
@@ -12,7 +11,16 @@ import type { Post } from "@/types/types";
 import type { Option } from "@/types/types";
 
 // ICONS
-import { Bookmark, Share2, Trash, Edit } from "lucide-react";
+import {
+  Bookmark,
+  Share2,
+  Trash,
+  Edit,
+  ThumbsUp,
+  ThumbsDown,
+  MessageCircle,
+  Eye,
+} from "lucide-react";
 
 const CategoryBubble = ({ category }: { category: string }) => {
   return (
@@ -28,11 +36,13 @@ export const PostCard = ({
   selectable,
   onSelect,
   onDelete,
+  onReply,
 }: {
   post: Post;
   selectable?: boolean;
   onSelect?: (post: Post) => void;
   onDelete?: (id: number) => void;
+  onReply?: () => void;
 }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -43,9 +53,17 @@ export const PostCard = ({
 
   const { id, title, description, time, categories, user, institution, type } =
     post;
-  const { name } = user;
+  // Prioridad: Alias -> Name (que ya tiene username como fallback en el backend/servicio)
+  const name = user.alias || user.name;
 
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Estados de Reacción
+  const [userReaction, setUserReaction] = useState<"LIKE" | "DISLIKE" | null>(
+    null
+  );
+  const [likesCount, setLikesCount] = useState(post.likes || 0);
+  const [dislikesCount, setDislikesCount] = useState(post.dislikes || 0);
 
   // Opciones base disponibles en todas las páginas
   const baseOptions: Option[] = [
@@ -55,7 +73,7 @@ export const PostCard = ({
 
   // En /perfil/publicaciones añadimos Editar y Eliminar.
   // En otras rutas solo mostramos las opciones base (Guardar, Compartir).
-  let options: Option[] = [...baseOptions];
+  const options: Option[] = [...baseOptions];
   if (pathname === "/perfil/publicaciones") {
     options.push({ id: 3, label: "Editar publicación", Icon: Edit });
     options.push({ id: 4, label: "Eliminar publicación", Icon: Trash });
@@ -75,6 +93,26 @@ export const PostCard = ({
     console.log(option);
   };
 
+  const handleReaction = (type: "LIKE" | "DISLIKE") => {
+    if (userReaction === type) {
+      setUserReaction(null);
+      if (type === "LIKE") {
+        setLikesCount((prev) => prev - 1);
+      } else {
+        setDislikesCount((prev) => prev - 1);
+      }
+    } else {
+      if (userReaction === "LIKE") setLikesCount((prev) => prev - 1);
+      if (userReaction === "DISLIKE") setDislikesCount((prev) => prev - 1);
+      setUserReaction(type);
+      if (type === "LIKE") {
+        setLikesCount((prev) => prev + 1);
+      } else {
+        setDislikesCount((prev) => prev + 1);
+      }
+    }
+  };
+
   const containerClasses =
     pathname === "/comentarios"
       ? "flex flex-col py-3 px-4 gap-2 border-default rounded-lg bg-surface"
@@ -84,7 +122,8 @@ export const PostCard = ({
     <article
       id={String(id)}
       className={containerClasses}
-      aria-labelledby={`post-title-${id}`}>
+      aria-labelledby={`post-title-${id}`}
+    >
       {/* HEADER */}
       <div className="flex text-primary justify-between items-center">
         <div className="flex items-center gap-3">
@@ -109,11 +148,17 @@ export const PostCard = ({
           </div>
         </div>
 
-        <MoreOptions options={options} onSelect={handleSelect} />
+        <div className="relative w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-gray-100 dark:hover:bg-surface-2 active:scale-95 cursor-pointer">
+          <div className="absolute inset-0 flex items-center justify-center [&>button]:w-full [&>button]:h-full [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:cursor-pointer">
+            <MoreOptions options={options} onSelect={handleSelect} />
+          </div>
+        </div>
+
         <Dialog
           title="Confirmar eliminación"
           open={showConfirm}
-          onClose={() => setShowConfirm(false)}>
+          onClose={() => setShowConfirm(false)}
+        >
           <div className="flex flex-col gap-4">
             <p>¿Estás seguro de que quieres eliminar esta publicación?</p>
 
@@ -121,7 +166,8 @@ export const PostCard = ({
               <ButtonAction
                 type="button"
                 className="px-4 py-2"
-                onClick={() => setShowConfirm(false)}>
+                onClick={() => setShowConfirm(false)}
+              >
                 Cancelar
               </ButtonAction>
 
@@ -131,7 +177,8 @@ export const PostCard = ({
                 onClick={() => {
                   if (onDelete) onDelete(id as number);
                   setShowConfirm(false);
-                }}>
+                }}
+              >
                 Aceptar
               </ButtonAction>
             </div>
@@ -146,10 +193,12 @@ export const PostCard = ({
           handleNavigate(`/detalles/${id}`);
         }}
         role="button"
-        className="flex flex-col gap-2 text-primary cursor-pointer">
+        className="flex flex-col gap-2 text-primary cursor-pointer"
+      >
         <h3
           className="font-bold text-lg flex items-center gap-2"
-          id={`post-title-click-${id}`}>
+          id={`post-title-click-${id}`}
+        >
           {title}
         </h3>
         <p className="text-sm text-muted">{description}</p>
@@ -164,7 +213,68 @@ export const PostCard = ({
         </div>
       </div>
 
-      <Stats stats={post} />
+      {/* Footer: Métricas y Reacciones */}
+      <div className="flex items-center justify-between text-muted text-xs pt-2 mt-1">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 cursor-default">
+            <Eye size={16} /> <span>{post.views || 0}</span>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onReply) {
+                onReply();
+              } else {
+                handleNavigate(`/detalles/${id}`);
+              }
+            }}
+            className="flex items-center gap-1.5 transition-colors group hover:text-blue-500"
+          >
+            <MessageCircle
+              size={16}
+              className="group-hover:scale-110 transition-transform"
+            />
+            <span>{post.messages || 0}</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleReaction("LIKE");
+            }}
+            className={`flex items-center gap-1.5 transition-colors ${
+              userReaction === "LIKE"
+                ? "text-blue-500 font-bold"
+                : "hover:text-blue-500"
+            }`}
+          >
+            <ThumbsUp
+              size={16}
+              fill={userReaction === "LIKE" ? "currentColor" : "none"}
+            />
+            <span>{likesCount}</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleReaction("DISLIKE");
+            }}
+            className={`flex items-center gap-1.5 transition-colors ${
+              userReaction === "DISLIKE"
+                ? "text-red-500 font-bold"
+                : "hover:text-red-500"
+            }`}
+          >
+            <ThumbsDown
+              size={16}
+              fill={userReaction === "DISLIKE" ? "currentColor" : "none"}
+            />
+            <span>{dislikesCount}</span>
+          </button>
+        </div>
+      </div>
     </article>
   );
 };

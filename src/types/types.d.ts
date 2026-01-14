@@ -15,6 +15,7 @@ export type User = {
   note?: string;
   theme?: string;
   role?: Role;
+  alias?: string;
 };
 
 export type Contact = {

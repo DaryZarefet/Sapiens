@@ -272,7 +272,7 @@ export const CommentCard = ({
             </div>
             <div className="flex flex-col leading-tight">
               <h3 className="font-bold text-sm text-primary">
-                {comment.user.name}
+                {comment.user.alias || comment.user.name}
               </h3>
               <span className="text-[10px] text-muted">
                 {timeAgo(comment.time)}

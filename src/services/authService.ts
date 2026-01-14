@@ -141,8 +141,40 @@ export const authService = {
     try {
       console.log("[AuthService] Verificando token con /api/profile/");
       const response = await apiServer.get("/api/profile/");
-      console.log("[AuthService] Token válido, usuario verificado");
-      return { success: true, data: response.data, message: "OK" };
+      console.log("[AuthService] Respuesta de /api/profile/:", response.data);
+
+      // El backend puede retornar directamente el usuario o dentro de un objeto user
+      const userData = response.data.user || response.data;
+
+      // Asegurarse de que tenga datos mínimos
+      const user: User = {
+        id: userData.id || userData.user_id || 0,
+        name:
+          userData.name ||
+          userData.Nombre_de_Usuario ||
+          userData.username ||
+          "",
+        username: userData.username || userData.Nombre_de_Usuario || "",
+        email: userData.email || userData.gmail || "",
+        avatar:
+          userData.avatar ||
+          userData.profile_image ||
+          userData.Avatar ||
+          undefined,
+        background: userData.background || undefined,
+        note: userData.note || userData.bio || userData.Nota || undefined,
+        role: userData.role || userData.rol || undefined,
+        alias: userData.alias || userData.Alias || undefined,
+        sex: userData.sex || userData.Sexo || undefined,
+      };
+
+      console.log("[AuthService] Usuario procesado:", user);
+
+      return {
+        success: true,
+        data: { user },
+        message: "OK",
+      };
     } catch (error: unknown) {
       console.error("[AuthService] Error verificando token:", error);
       if (axios.isAxiosError(error) && error.response?.status === 401) {
