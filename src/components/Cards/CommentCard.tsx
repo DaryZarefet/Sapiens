@@ -1,6 +1,6 @@
 import { timeAgo } from "@/shared/utils/utilsfunctions";
 import { MoreOptions } from "../Post/MoreOptions";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 //INTERFACES
 import type { Comment } from "@/types/types";
@@ -35,19 +35,21 @@ export const CommentCard = ({ comment }: { comment: Comment }) => {
     <article id={String(id)} className={"flex flex-col py-6 px-4 gap-3 border-default rounded-lg bg-surface"} aria-labelledby={`post-title-${id}`}>
       {/* HEADER */}
       <div className="flex text-primary justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Avatar user={user} size={12} />
+        <NavLink to="/otroperfil/:4">
+          <div className="flex items-center gap-3">
+            <Avatar user={user} size={12} />
 
-          <div className="flex flex-col leading-tight">
-            <h3 id={`post-title-${id}`} className="font-bold text-primary">
-              {name}
-            </h3>
+            <div className="flex flex-col leading-tight">
+              <h3 id={`post-title-${id}`} className="font-bold text-primary">
+                {name}
+              </h3>
 
-            <div className="flex items-center gap-2 text-xs text-muted">
-              <p>{timeAgo(time)}</p>
+              <div className="flex items-center gap-2 text-xs text-muted">
+                <p>{timeAgo(time)}</p>
+              </div>
             </div>
           </div>
-        </div>
+        </NavLink>
 
         <MoreOptions options={options} onSelect={handleSelect} />
       </div>

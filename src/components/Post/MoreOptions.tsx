@@ -79,11 +79,7 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
 
   const sheet = (
     <>
-      <div
-        className={`fixed inset-0 bg-black/50 transition-opacity z-60 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        aria-hidden={!open}
-        onClick={close}
-      />
+      <div className={`fixed inset-0 bg-black/50 transition-opacity z-60 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`} aria-hidden={!open} onClick={close} />
 
       <div
         role="dialog"
@@ -94,12 +90,12 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
         <div className="max-w-3xl mx-auto">
           <div className="rounded-t-xl bg-surface shadow-lg overflow-hidden">
             {/* Handle */}
-            <div className="flex justify-center py-2">
+            <div className="flex justify-center py-2 bg-surface-2">
               <div className="w-12 h-1.5 bg-surface rounded-full" />
             </div>
 
             {/* Title */}
-            <div className="px-4 pb-2 bg-surface-2 border-b border-[var(--color-border)]">
+            <div className="px-4 pb-2 bg-surface-2  border-b border-[var(--color-border)]">
               <h3 className="text-sm font-medium text-primary dark:text-gray-100">Opciones</h3>
             </div>
 
@@ -114,7 +110,7 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
                   }}
                   onClick={() => handleSelect(opt)}
                   onKeyDown={(e) => handleOptionKey(e, idx)}
-                  className="w-full text-left px-4 py-3 flex items-center gap-3  focus:outline-none"
+                  className="w-full text-left px-4 py-3 flex items-center gap-3 hover:cursor-pointer"
                 >
                   {opt.Icon ? <opt.Icon className="w-5 h-5 " /> : null}
                   <div className="flex-1">
@@ -125,7 +121,7 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
             </div>
 
             <div className="px-4 py-3">
-              <ButtonAction type="button" onClick={close} className="w-full text-center  px-4 py-2 rounded-lg font-medium focus:outline-none">
+              <ButtonAction type="button" onClick={close} className="w-full text-center  px-4 py-2 rounded-lg font-medium">
                 Cerrar
               </ButtonAction>
             </div>
@@ -140,7 +136,7 @@ export function MoreOptions({ options, onSelect, initialOpen = false }: BottomSh
       <button
         ref={triggerRef}
         onClick={openSheet}
-        className={`inline-flex items-center gap-2  rounded-md text-textprimary`}
+        className="inline-flex items-center gap-2  rounded-md text-textprimary hover:cursor-pointer"
         aria-expanded={open}
         aria-controls="bottom-sheet"
       >

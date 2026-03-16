@@ -1,6 +1,6 @@
 import { timeAgo } from "@/shared/utils/utilsfunctions";
 import { MoreOptions } from "../Post/MoreOptions";
-import { useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Stats } from "../Post/Stats";
 import { Avatar } from "../Avatar";
 
@@ -9,7 +9,7 @@ import type { Post } from "@/types/types";
 import type { Option } from "@/types/types";
 
 // ICONS
-import { Bookmark, Share2, Trash } from "lucide-react";
+import { Bookmark, Share2, User } from "lucide-react";
 
 const CategoryBubble = ({ category }: { category: string }) => {
   return (
@@ -34,7 +34,8 @@ export const PostCard = ({ post }: { post: Post }) => {
   const options: Option[] = [
     { id: 1, label: "Guardar", Icon: Bookmark },
     { id: 2, label: "Compartir", Icon: Share2 },
-    { id: 3, label: "Eliminar publicación", Icon: Trash },
+    { id: 3, label: "Ver perfil", Icon: User },
+    // { id: 3, label: "Eliminar publicación", Icon: Trash },
   ];
 
   const handleSelect = (option: Option) => {
@@ -42,35 +43,35 @@ export const PostCard = ({ post }: { post: Post }) => {
   };
 
   const containerClasses =
-    pathname === "/comentarios"
-      ? "flex flex-col py-6 px-4 gap-3 border-default rounded-lg bg-surface"
-      : "flex flex-col py-6 px-4 gap-3 border-b border-gray-200";
+    pathname === "/detalles/:id" ? "flex flex-col py-6 px-4 gap-3 border-default rounded-lg bg-surface" : "flex flex-col py-6 px-4 gap-3 border-b border-gray-200";
 
   return (
     <article id={String(id)} className={containerClasses} aria-labelledby={`post-title-${id}`}>
       {/* HEADER */}
       <div className="flex text-primary justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Avatar user={user} size={12} />
+        <NavLink to="/otroperfil/:4">
+          <div className="flex items-center gap-3">
+            <Avatar user={user} size={12} />
 
-          <div className="flex flex-col leading-tight">
-            <h3 id={`post-title-${id}`} className="font-bold text-primary">
-              {name}
-            </h3>
+            <div className="flex flex-col leading-tight">
+              <h3 id={`post-title-${id}`} className="font-bold text-primary">
+                {name}
+              </h3>
 
-            {institution && <p className="text-sm text-muted">{institution}</p>}
+              {institution && <p className="text-sm text-muted">{institution}</p>}
 
-            <div className="flex items-center gap-2 text-xs text-muted">
-              <p>{timeAgo(time)}</p>
-              {type && (
-                <>
-                  <div className="bg-[var(--color-border)] rounded-full h-1 w-1" />
-                  <p>{type}</p>
-                </>
-              )}
+              <div className="flex items-center gap-2 text-xs text-muted">
+                <p>{timeAgo(time)}</p>
+                {type && (
+                  <>
+                    <div className="bg-[var(--color-border)] rounded-full h-1 w-1" />
+                    <p>{type}</p>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </NavLink>
 
         <MoreOptions options={options} onSelect={handleSelect} />
       </div>
@@ -84,9 +85,7 @@ export const PostCard = ({ post }: { post: Post }) => {
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-2">
-        <div className="flex items-center gap-2">
-          {(categories?.length ?? 0) > 0 && categories!.map((category) => <CategoryBubble key={category} category={category} />)}
-        </div>
+        <div className="flex items-center gap-2">{(categories?.length ?? 0) > 0 && categories!.map((category) => <CategoryBubble key={category} category={category} />)}</div>
       </div>
 
       <Stats stats={post} />

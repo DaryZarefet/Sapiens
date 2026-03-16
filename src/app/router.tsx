@@ -21,7 +21,12 @@ const NotificationsArticles = lazy(() => import("@/components/Notifications/Noti
 const Settings = lazy(() => import("@/components/Settings/Settings"));
 const SettingsSystem = lazy(() => import("@/components/Settings/SettingsSystem"));
 const SettingsAccount = lazy(() => import("@/components/Settings/SettingsAccount"));
+
 const ChangePassword = lazy(() => import("@/components/Settings/ChangePassword"));
+const ForgotPassword = lazy(() => import("@/components/Settings/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/components/Settings/ResetPassword"));
+
+const InviteUser = lazy(() => import("@/components/Settings/InviteUser"));
 
 //PROFILE
 const Profile = lazy(() => import("@/components/ProfileUser/PageProfile"));
@@ -70,6 +75,8 @@ export const router = createBrowserRouter([
       { path: "/ajustes/sistema", element: <SettingsSystem /> },
       { path: "/ajustes/cuenta", element: <SettingsAccount /> },
       { path: "/ajustes/cuenta/contraseña", element: <ChangePassword /> },
+      { path: "/ajustes/cuenta/olvide-contraseña", element: <ForgotPassword /> },
+      { path: "/ajustes/cuenta/restablecer-contraseña", element: <ResetPassword /> },
 
       //PROFILE
       { path: "/perfil", element: <Profile /> },
@@ -84,6 +91,8 @@ export const router = createBrowserRouter([
       // { path: "/chat", element: <Chat /> },
       { path: "/chat/crear", element: <CreateGroup /> },
       { path: "/chat/grupo/:id", element: <GroupSettings /> },
+
+      { path: "/invitar-usuario", element: <InviteUser /> },
     ],
   },
 

@@ -50,14 +50,7 @@ const Login = () => {
           </label>
           <div className="flex items-center gap-3">
             <MdLockOutline size={20} className="text-primary flex-shrink-0" />
-            <input
-              {...register("password")}
-              name="password"
-              type="password"
-              placeholder="Contraseña"
-              autoComplete="current-password"
-              className="input-underline focus-ring-primary"
-            />
+            <input {...register("password")} name="password" type="password" placeholder="Contraseña" autoComplete="current-password" className="input-underline focus-ring-primary" />
           </div>
         </section>
 

@@ -4,8 +4,12 @@ import { useRef, useState, useEffect } from "react";
 
 // ICONS
 import { Bell, PencilLine } from "lucide-react";
+
+//COMPONENTS
 import { PanelOptions } from "./PanelOptions";
 import { Avatar } from "../Avatar";
+
+//SHAREDS
 import { Input } from "@/shared/inputs/Input";
 
 export const MainHeader = () => {
@@ -77,11 +81,7 @@ export const MainHeader = () => {
 
           {/* Center - Search */}
           <div className="flex-1 flex justify-center px-4">
-            <Input
-              type="search"
-              placeholder="Buscar contenido..."
-              className="w-full max-w-xl px-4 py-2 rounded-xl bg-surface-2 border border-[var(--color-border)] text-primary"
-            />
+            <Input type="search" placeholder="Buscar contenido..." className="w-full max-w-xl px-4 py-2 rounded-xl bg-surface-2 border border-[var(--color-border)] text-primary" />
           </div>
 
           {/* Right - Actions */}

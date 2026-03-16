@@ -19,7 +19,12 @@ const FollowersList = () => {
             <ul className="flex items-center gap-6 h-16">
               {navs.map((nav) => (
                 <li key={nav.name} className="font-semibold">
-                  <NavLink to={nav.path} className={({ isActive }) => `text-base inline-flex items-center px-2 py-1 rounded-md transition ${isActive ? "text-primary" : "text-muted hover:text-primary"}`}>
+                  <NavLink
+                    to={nav.path}
+                    className={({ isActive }) =>
+                      `text-base inline-flex items-center px-2 py-1 rounded-md transition ${isActive ? "text-primary" : "text-muted hover:text-primary"}`
+                    }
+                  >
                     {nav.name}
                   </NavLink>
                 </li>
@@ -27,8 +32,7 @@ const FollowersList = () => {
             </ul>
           </div>
         </nav>
-        {/* Contenido: mantenemos overflow-hidden aquí si lo necesitas para cortar bordes */}
-        <div className="flex flex-col gap-4 bg-surface p-4 md:p-6 rounded-b-2xl overflow-hidden">
+        <div className="flex flex-col gap-4 bg-surface rounded-b-2xl overflow-hidden">
           {userlist.map((user) => (
             <UserCard key={user.id} user={user} />
           ))}

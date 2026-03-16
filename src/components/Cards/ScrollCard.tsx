@@ -39,7 +39,6 @@ export const ScrollCard = ({ posts, navs }: Props) => {
           </nav>
         )}
 
-        {/* Contenido: mantenemos overflow-hidden aquí si lo necesitas para cortar bordes */}
         <div className="flex flex-col gap-4 bg-surface p-4 md:p-6 rounded-b-2xl overflow-hidden">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
@@ -47,7 +46,6 @@ export const ScrollCard = ({ posts, navs }: Props) => {
         </div>
       </section>
 
-      {/* ASIDE (solo en desktop) */}
       {isDesktop && (
         <aside className="w-80 lg:w-96 flex-shrink-0">
           <AsidePost />

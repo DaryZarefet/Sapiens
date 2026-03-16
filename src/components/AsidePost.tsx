@@ -4,6 +4,7 @@ import { Buttonav } from "@/shared/ui/Buttonnav";
 // ICONS
 import { Pencil, File, Plus } from "lucide-react";
 import { Avatar } from "./Avatar";
+import { NavLink } from "react-router-dom";
 
 export const AsidePost = () => {
   const temas = [
@@ -50,17 +51,19 @@ export const AsidePost = () => {
 
               return (
                 <div key={id} className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-3">
-                    <Avatar user={user} size={12} />
-                    <div className="truncate">
-                      <h3 className="font-semibold text-primary truncate">{name}</h3>
-                      <p className="text-sm text-muted truncate">{username}</p>
+                  <NavLink to="/otroperfil/:4">
+                    <div className="flex items-center gap-3">
+                      <Avatar user={user} size={12} />
+                      <div className="truncate">
+                        <h3 className="font-semibold text-primary truncate">{name}</h3>
+                        <p className="text-sm text-muted truncate">{username}</p>
+                      </div>
                     </div>
-                  </div>
+                  </NavLink>
 
                   <button
                     aria-label={`Seguir a ${name}`}
-                    className="p-2 border border-[var(--color-border)] rounded-xl hover:bg-surface-2 transition flex items-center justify-center"
+                    className="p-2 border border-[var(--color-border)] rounded-xl transition flex items-center justify-center hover:cursor-pointer hover:bg-surface-2"
                     title={`Seguir a ${name}`}
                   >
                     <Plus size={18} className="text-primary" />

@@ -1,4 +1,4 @@
-import avatardefault from "@/assets/images/avatar.png";
+import avatardefault from "@/assets/images/20260215_015334.jpg";
 
 //TYPES
 import type { User } from "@/types/types";

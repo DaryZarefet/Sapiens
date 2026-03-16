@@ -72,7 +72,7 @@ export const Profile = ({ user, type }: { user: User; type: boolean }) => {
       {/* PROFILE INFO */}
       <div className="relative">
         <div className={isDesktop ? "ml-0" : ""}>
-          <div className="w-full overflow-hidden rounded-b-md">
+          <div className="w-full overflow-hidden">
             <img src={background} alt={`${name} background`} className="w-full h-44 md:h-56 object-cover" />
           </div>
 

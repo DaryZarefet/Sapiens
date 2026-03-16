@@ -1,8 +1,19 @@
-// ICONS
+//REACT
+import { useNavigate } from "react-router-dom";
+
+//COMPONENTS
 import { ButtonAction } from "@/shared/ui/ButtonAction";
+
+// ICONS
 import { Paperclip } from "lucide-react";
 
 const CreateArticle = ({ document }: { document: boolean }) => {
+  const navigate = useNavigate();
+
+  const cancel = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="flex items-center justify-center px-5 lg:px-10 xl:px-20 w-full">
       <div className="w-full my-5 mx-5 lg:mx-10 xl:mx-20 p-8 bg-surface rounded-2xl border-default shadow-md">
@@ -47,17 +58,9 @@ const CreateArticle = ({ document }: { document: boolean }) => {
 
           {/* Type + Category row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Tipo de publicación"
-              className="p-3 w-full text-md font-semibold border border-[var(--color-border)] rounded-lg text-primary"
-            />
+            <input type="text" placeholder="Tipo de publicación" className="p-3 w-full text-md font-semibold border border-[var(--color-border)] rounded-lg text-primary" />
 
-            <input
-              type="text"
-              placeholder="Categoría"
-              className="p-3 w-full text-md font-semibold border border-[var(--color-border)] rounded-lg text-primary"
-            />
+            <input type="text" placeholder="Categoría" className="p-3 w-full text-md font-semibold border border-[var(--color-border)] rounded-lg text-primary" />
           </div>
 
           {/* Body */}
@@ -80,6 +83,7 @@ const CreateArticle = ({ document }: { document: boolean }) => {
 
             <div className="flex items-center gap-3">
               <ButtonAction
+                onClick={cancel}
                 type="button"
                 className="px-4 py-2 rounded-md border border-[var(--color-border)] bg-surface text-primary hover:bg-surface-2 transition"
               >

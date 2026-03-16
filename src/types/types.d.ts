@@ -3,6 +3,12 @@ export type Role = {
   name: "alumno" | "profesor" | "moderador";
 };
 
+export type Options = {
+  id: number;
+  name: string;
+  function: any;
+};
+
 export type User = {
   id: number;
   name: string;
@@ -15,6 +21,7 @@ export type User = {
   note?: string;
   theme?: string;
   role?: Role;
+  options: Options;
 };
 
 export type Contact = {
